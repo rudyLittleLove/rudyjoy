@@ -15,6 +15,7 @@ import { resolve } from 'path'  // 正确导入方式
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/rudyjoy/',
   define: {
     'process.env': {
       'BASE_URL':"/"
