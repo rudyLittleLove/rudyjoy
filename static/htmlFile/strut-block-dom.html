@@ -1,0 +1,97 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>深入理解CSS之 如何使子元素撑宽 设置了 block 的父元素</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>深入理解CSS之 如何使子元素撑宽 设置了display: block; 的父元素</h3><ul><li><a href="#_2">先写一个模板，晚点再吐槽</a></li><li><a href="#_36">吐槽</a></li><li><a href="#___68">实现原理 与 更多支持的属性</a></li><li><a href="#___86">不想使父级的 块 属性消失怎么办</a></li><li><a href="#_104">这种属性规则有什么作用呢</a></li></ul></div><p></p>
+<h1><a id="_2"></a>先写一个模板，晚点再吐槽</h1>
+<p>HTML</p>
+<pre><code class="prism language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>wrap<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>grandpa<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>father<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>span</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>child<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>我是一个子元素，我要写很多字把宽度撑开，我要写很多字把宽度撑开，我要写很多字把宽度撑开，我要写很多字把宽度撑开<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>span</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+</code></pre>
+<p>CSS</p>
+<pre><code class="prism language-css"><span class="token selector">.wrap</span> <span class="token punctuation">{</span>
+  <span class="token property">width</span><span class="token punctuation">:</span> 300px<span class="token punctuation">;</span>
+  <span class="token property">box-shadow</span><span class="token punctuation">:</span> 0 0 3px 1px #000000<span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> 5px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">.grandpa</span> <span class="token punctuation">{</span>
+  <span class="token property">box-shadow</span><span class="token punctuation">:</span> 0 0 3px 1px peru<span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> 5px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">.father</span> <span class="token punctuation">{</span>
+  <span class="token property">box-shadow</span><span class="token punctuation">:</span> 0 0 3px 1px royalblue<span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> 5px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">.child</span> <span class="token punctuation">{</span>
+  <span class="token property">white-space</span><span class="token punctuation">:</span> nowrap<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>效果图<br>
+<img src="https://img-blog.csdnimg.cn/20200605111015899.png" alt="在这里插入图片描述"></p>
+<h1><a id="_36"></a>吐槽</h1>
+<p>可能看到这个标题的并且懂一点 <code>css</code> 的小伙伴就要笑了，子元素称宽父元素不是很简单吗。</p>
+<p>只需要设置父元素 <code>display</code> 为 <code>inline-block</code>, 或者 设置 <code>float: left</code> 并清除一下浮动影响就行，就像下面这样。</p>
+<pre><code class="prism language-css"><span class="token selector">.father</span> <span class="token punctuation">{</span>
+  <span class="token property">display</span><span class="token punctuation">:</span> inline-block<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="https://img-blog.csdnimg.cn/20200605111338826.png" alt="在这里插入图片描述"></p>
+<pre><code class="prism language-css"><span class="token selector">.father</span> <span class="token punctuation">{</span>
+  <span class="token property">float</span><span class="token punctuation">:</span> left<span class="token punctuation">;</span> <span class="token comment">/* 未清除浮动 */</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="https://img-blog.csdnimg.cn/20200605111443487.png" alt="在这里插入图片描述"></p>
+<p>或者对 <code>css</code> 理解更深入的小伙伴也会想</p>
+<p>也可以设置 爷爷（父元素的父元素） 元素 <code>display</code> 为 <code>flex</code> 或者 <code>grid</code>，就像下面这样。</p>
+<pre><code class="prism language-css"><span class="token selector">.grandpa</span><span class="token punctuation">{</span>
+  <span class="token property">display</span><span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre><code class="prism language-css"><span class="token selector">.grandpa</span><span class="token punctuation">{</span>
+  <span class="token property">display</span><span class="token punctuation">:</span> grid<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="https://img-blog.csdnimg.cn/20200605112014991.png" alt="在这里插入图片描述"></p>
+<h1><a id="___68"></a>实现原理 与 更多支持的属性</h1>
+<p>上面的属性不管是<code>.father</code> 设置 <code>display: inline-block</code> 或 <code>float: left;</code> ，</p>
+<p>还是 <code>.grandpa</code> 设置 <code>display: flex;</code> 或 <code>display: grid;</code></p>
+<p>都是使 <code>.father</code> 这个<code>DOM</code> 最大宽度不受 <code>.grandpa</code> 限制，</p>
+<p>唯一的区别是每个属性还带有其他个性的样式，</p>
+<p>比如 设置了 <code>float</code> 默认就无法撑开高度</p>
+<p>设置了 <code>display: grid</code> 即使文本过少，<code>.father</code> 的宽度默认与<code>.grandpa</code> 相同</p>
+<p>只要满足 <code>.father</code> 自动宽度 不受 <code>.grandpa</code> 最大宽度限制就能实现这个效果的话，<code>display</code> 的很多属性都能实现。</p>
+<p>比如： <code>inline-flex</code>, <code>inline-table</code>, <code>inline-grid</code>, <code>table</code>, <code>table-captioin</code>, <code>table-cell</code> …，看下面的例子。<br>
+<img src="https://img-blog.csdnimg.cn/20200605114815430.gif" alt="在这里插入图片描述"></p>
+<h1><a id="___86"></a>不想使父级的 块 属性消失怎么办</h1>
+<p>有时候我们看文档的时候，只从描述中无法深入的了解属性。比如这里的子元素撑开父元素，我们第一反应就是更改父元素的块属性。</p>
+<p>隐藏属性就是，父元素是块，但是未设置过 <code>width</code> 和 <code>max-width</code> , 子元素能撑开的最大宽度就是最近一个设置过宽度的祖先元素，而不是只是父元素。还用上面的模板举个例子</p>
+<pre><code class="prism language-css"><span class="token selector">.grandpa</span><span class="token punctuation">{</span>
+  <span class="token property">display</span><span class="token punctuation">:</span> inline-block<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="https://img-blog.csdnimg.cn/20200605115730354.png" alt="在这里插入图片描述"><br>
+这个例子中就可以看到，爷爷元素设置了 <code>display: inline-block</code> ，父亲元素 还是 块 元素。但是子元素会连带父元素和爷爷元素一起撑宽。</p>
+<p>如果是在 <code>.wrap</code> 这个<code>DOM</code> 上设置 <code>display: inline-block</code> ，父元素和爷爷元素还是不过超过 <code>.wrap</code> 的宽度。</p>
+<p>这就是上面说到的 子元素能撑开的最大宽度就是最近一个设置过宽度（最大宽度）的祖先元素。</p>
+<h1><a id="_104"></a>这种属性规则有什么作用呢</h1>
+<p>如果是写一个树，子元素都需要块占据一行，但是子要撑开父元素，只需要中间的块元素不设置宽度。</p>
+<p>最上层元素设置上面提到的任意不受父最大宽度限制的属性，都可以撑宽树整体宽度。从而出现横向滚动条。</p>
+<p>有兴趣的小伙伴可以看看 <a href="https://zdy1988.github.io/vue-jstree/">v-jstree demo</a> 就是设置顶层元素 <code>display: inline-block</code>，使横向滚动条出现的，使用这个插件顶层元素 默认并不是<code>display: inline-block</code> ，不要忘了手动设置。</p>
+<p>css 隐藏规则有很多，大家伙多用用就知道了，比如前几天 张鑫旭 发的一篇博客 使用 <code>columns</code> 属性，不单能直接分割文本，还能分割标签（虽然有较多限制）。</p>
+<p>以上分享如果疏漏或错误欢迎指正。</p>
+</div>
+</body>
+
+</html>

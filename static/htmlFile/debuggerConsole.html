@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>进入debugger调试时，this 输出 undefined的问题，箭头函数与babel造成的调试不便</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>进入debugger调试时, this 输出 undefined的问题，箭头函数与babel造成的调试不便</h3><ul><li><a href="#_1">引言</a></li><li><a href="#_4">问题区分</a></li><ul><li><a href="#1_this__6">1.箭头函数内的 this 和封闭的局部变量一样</a></li><li><a href="#2_this_babel__15">2.箭头函数内的 this 被babel 打包后重命名了</a></li><li><a href="#3this__53">3.正确获取this 解决方案</a></li></ul></ul></div><p></p>
+<h1><a id="_1"></a>引言</h1>
+<p>  之前用<code>VUE</code>开发的时候经常遇到，用 <strong>chrome</strong> 的调试工具进入页面 <code>debugger</code> 的时候，用 <code>console.log(this)</code> 能输出 <code>this</code>的值。但是在断点过程中，用鼠标移动到 <code>this</code> 上显示的确是 <code>undefined</code>(在控制台中输出 <code>this</code> 也是 <code>undefined</code>)。说实话，当时是因为影响并不大，也没在意，也没探究过具体的原因。昨天刚好手上任务完成，就抽了一些时间去仔细找找具体的原因以及解决方案。</p>
+<h1><a id="_4"></a>问题区分</h1>
+<p>  对的，你没看错，这个问题要区分一下，因为这个问题并不只是一个问题。这里涉及到多个问题，我在查找原因的时候就发现有人问类似的问题。当我知道具体原因后就发现，问的以及回答的存在牛头不对马嘴的情况。</p>
+<h2><a id="1_this__6"></a>1.箭头函数内的 this 和封闭的局部变量一样</h2>
+<p>  这里不展开分享箭头函数，主要讲一点，箭头函数里的 <code>this</code> 跟封闭的局部变量一样，如果箭头函数内部未显示的写出 <code>this</code>，进入这个箭头函数内部的断点，<code>this</code> 输出的是 <code>undefined</code>，看下面这个例子你就知道了。<br>
+<img src="https://img-blog.csdnimg.cn/20200403102524479.gif" alt="在这里插入图片描述"><br>
+这个动图写了两个例子，一个箭头函数内只写了一个<code>debugger</code> ，另一个还显示的写了<code>this</code>，都进入断点时，第一个输出<code>undefined</code>，第二个输出了<code>Window</code>对象。这就是进入断点在控制台中输出<code>this</code> 为 <code>undefined</code> 的第一个问题。</p>
+<p>至于出现原因就是因为<code>chrome</code>调试器的优化，如果未在函数内部引用局部变量（这里是<code>this</code>），这个变量就不会存储在此函数上下文对象中。所以总结就是箭头函数内部的<code>this</code>(这里不谈指向)，生存周期与普通函数的封闭局部变量一样，都是未显示引用输出就是<code>undefined</code>（针对chrome 调试，火狐不会）。</p>
+<p>有兴趣的小伙伴可以进入这篇 <a href="https://stackoom.com/question/1v79W/Chrome%E8%B0%83%E8%AF%95%E5%99%A8%E4%B8%BA%E4%BD%95%E8%AE%A4%E4%B8%BA%E5%B0%81%E9%97%AD%E7%9A%84%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E6%9C%AA%E5%AE%9A%E4%B9%89">Chrome调试器为何认为封闭的局部变量未定义？</a>中看看其他牛人的讨论，如果英语足够好也可以进原英文链接 <a href="https://stackoverflow.com/questions/28388530/why-does-chrome-debugger-think-closed-local-variable-is-undefined">Why does Chrome debugger think closed local variable is undefined?</a> 相信这里能完全解决你此问题的疑惑。<br>
+<br></p>
+<h2><a id="2_this_babel__15"></a>2.箭头函数内的 this 被babel 打包后重命名了</h2>
+<p>刚了解到这个问题的时候就去<code>babel</code>官网看了，找到 <a href="https://babeljs.io/docs/en/faq#why-is-this-being-remapped-to-undefined">Why is this being remapped to undefined?</a> 这样一个问题，我兴奋的以为，我找到了答案。但被事实狠狠打大了一把脸。这里问的主要是因为 <code>babel</code> ES2015模块是隐式严格模式的，所以即使是上方第一个问题用普通函数输出也是<code>undefined</code>（严格模式下用<code>window.</code> 调用函数，函数内部<code>this</code> 才会指向 <code>Window</code> 对象）。</p>
+<p>回到我们的具体问题。进入断点时 <code>console.log(this)</code> 输出了内容，而直接在控制台写 <code>this</code> 执行或者鼠标移到断点处的 <code>this</code> 上显示 <code>undefined</code>是什么原因（<strong>这里不是探究为什么显示<code>undefined</code>了，而是为什么和代码中<code>console.log(this)</code> 输出的不一致，即使解决了输出<code>undefined</code> ，也就是移除严格模式，这里的<code>this</code> 应该也只是输出 <code>Window</code>对象，而不是我们当前运行环境中的比如<code>Vue</code> 这个组件对象）</strong>。</p>
+<p>因为在项目中使用了<code>babel</code>。比如箭头函数就会被打包成普通函数，而<code>this</code> 指向就会用变量保存来代替，比如<code>_this</code>，<code>_this2</code>之类的。<br>
+我把代码例子贴出来大家就知道了，我用的<code>vue</code> 就用<code>vue</code>使用的一个箭头函数的例子解释。</p>
+<pre><code class="prism language-javascript"><span class="token comment">/* 这个代码是vue methods 钩子下的一个函数，是我的源代码。*/</span>
+<span class="token function">handle</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>number<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">debugger</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">/* 这个代码就是上方代码在项目运行中，打包后的代码 */</span>
+handle<span class="token punctuation">:</span> <span class="token keyword">function</span> <span class="token function">handle</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> _this2 <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>_this2<span class="token punctuation">.</span>number<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">debugger</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>下面的截图就是在运行中Sources 下进入断点的代码<br>
+<img src="https://img-blog.csdnimg.cn/20200403140113382.gif" alt="查看源码与打包后运行代码差异"><br>
+从上面明显可以看到，这里的<code>this</code> 已经在<code>babel</code> 打包后赋值给了<code>_this2</code>这个变量。意思就是虽然我们断点进入的是比如上方的<code>About.vue</code> 这个文件，实际运行的代码是左侧这个<code>cjs.js?</code> 这个文件。这种运行环境下你能看到 <code>Console</code> 下 直接写<code>this</code> 输出是<code>undefined</code>，而在<code>About.vue</code> 这个文件中<code>console.log(this.number)</code> 实际是<code>cjs.js</code> 这个文件中的 <code>console.log(_this2.number)</code> 输出的。</p>
+<p>也就是断点这里<code>this</code>没有指向值，如果想调试查看你想要的 <code>this</code> 值，可以在<code>cjs.js</code>这个文件里看，不过因为打包后和实际写的源代码有较多差异你也可以在<code>Watch</code> 下添加<code>_this2</code> 监听，比如下面的例子。<br>
+<img src="https://img-blog.csdnimg.cn/20200403141909690.gif" alt="添加Watch监听"><br>
+这里因为我测试项目中用的<code>babel</code>是最新的，所以这里<code>this</code> 是用变量<code>_this2</code>保存的。我在其他旧的项目中，发现是<code>_this</code> 这个变量保存，所以大家可以在自己项目中多尝试一下，因为这个具体赋值到什么变量上根据项目代码场景确定的。</p>
+<p>也可以像我这样在控制台输入 <code>_this</code> 这里提示我 是 <code>_this6</code>，如果实在不找不到就接着看下面。<br>
+<img src="https://img-blog.csdnimg.cn/20200410152049703.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<h2><a id="3this__53"></a>3.正确获取this 解决方案</h2>
+<p>说到底难道没有不添加<code>Watch</code> 的办法吗，而且这里还是不能把鼠标移动到<code>this</code> 上提示预期值，其实也是有一些比较婉转的解决方案的。</p>
+<p>第一个，如果项目不用向下兼容，那么推荐不要使用<code>babel</code>了，嘿嘿，这个简单粗暴。(以下动图演示能看到这里的运行代码就没被<code>babel</code> 打包，因为我把<code>babel</code> 移除了)<br>
+<img src="https://img-blog.csdnimg.cn/20200403143152178.gif" alt="代码演示"><br>
+但是，既然你能遇到这个问题，肯定是项目中需要使用<code>label</code> 的，那么我们用一个插件来解决一下。</p>
+<pre><code class="prism language-shell"><span class="token function">npm</span> i babel-plugin-transform-es2015-arrow-functions --save-dev
+</code></pre>
+<p>然后在<code>.babelrc</code>或者是<code>babel.config.js</code> 配置文件中加入</p>
+<pre><code class="prism language-javascript">plugins<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token string">"transform-es2015-arrow-functions"</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> spec<span class="token punctuation">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
+</code></pre>
+<p>运行你的代码，进入断点就会发现。<br>
+<img src="https://img-blog.csdnimg.cn/20200403144601917.gif" alt="在这里插入图片描述"><br>
+项目确实被<code>babel</code> 打包了，但是箭头函数编译方式跟之前不一样了，之前是使用变量保存的方式，现在是使用<code>bind</code> 的方式。也就是内部函数<code>this</code> 的值被更改为外部函数<code>this</code> 值了。这样就可以直接在断点处查看<code>this</code> 的期望值，以后调试前端代码也能更加方便。虽然此方法获取来源的提供者说并非在所有的地方都行之有效，但经测试，我在最新构建的<code>Vue</code>项目中以及以前老的项目中都能使用。如果有遇到不能使用的情况，欢迎反馈哈。</p>
+<p>此方法是参考 <a href="https://stackoverflow.com/questions/36638663/value-of-this-is-incorrect-when-debugging-babel-transpiled-react-with-chrome-d">loganfsmyth 在Stack Overflow上回答一个问题的答案</a>，有兴趣的同学可以点进去看。<a href="https://stackoom.com/question/2TjOB/%E4%BD%BF%E7%94%A8Chrome-Devtools%E8%B0%83%E8%AF%95Babel-Transpiled-React%E6%97%B6-this-%E7%9A%84%E5%80%BC%E4%B8%8D%E6%AD%A3%E7%A1%AE">再加上国内复刻网站的中文链接</a>。</p>
+<p>以上解释如果描述不当或欠缺，欢迎指正，谢谢。</p>
+</div>
+</body>
+
+</html>

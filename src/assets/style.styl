@@ -1,0 +1,139 @@
+// ::-webkit-scrollbar 滚动条整体部分
+// ::-webkit-scrollbar-thumb  滚动条里面的小方块，能向上向下移动（或往左往右移动，取决于是垂直滚动条还是水平滚动条）
+// ::-webkit-scrollbar-track  滚动条的轨道（里面装有Thumb）
+// ::-webkit-scrollbar-button 滚动条的轨道的两端按钮，允许通过点击微调小方块的位置。
+// ::-webkit-scrollbar-track-piece 内层轨道，滚动条中间部分（除去）
+// ::-webkit-scrollbar-corner 边角，即两个滚动条的交汇处
+// ::-webkit-resizer 两个滚动条的交汇处上用于通过拖动调整元素大小的小控件
+  
+::-webkit-scrollbar
+  width 7px
+  height 7px
+::-webkit-scrollbar-thumb
+  background-color rgba(255, 255, 255, .2)
+  border-radius 3px
+
+.dark-scrollbar::-webkit-scrollbar
+  width 7px
+  height 7px
+.dark-scrollbar::-webkit-scrollbar-thumb
+  background-color rgba(0, 0, 0, .2)
+  border-radius 3px
+// ::-webkit-scrollbar-track
+//   // background-color orange
+//   box-shadow 0 0 4px rgba(0, 0, 0, .2) inset
+// ::-webkit-scrollbar-button
+//   width 8px
+//   height 8px
+//   background-color red
+// ::-webkit-scrollbar-track-piece
+//   margin 10px
+//   background-color purple
+// ::-webkit-scrollbar-corner
+  // background-color pink
+  // border-radius 15px
+
+.rudy-scrollbar
+  .rudy-scrollbar__view::after
+    content ""
+    display block
+    clear both
+  .rudy-scrollbar__thumb
+    background-color rgba(255, 255, 255, .2)
+
+.custom-scrollbar
+  overflow auto
+  height 100%
+  ::-webkit-scrollbar
+    width 7px
+    height 7px
+  ::-webkit-scrollbar-thumb
+    background-color rgba(255, 255, 255, .2)
+    border-radius 3px
+
+@font-face 
+  font-family "miniangle"
+  src url('./fonts/压缩后迷你.eot'); /* IE9 */
+  src url('./fonts/压缩后迷你.eot#iefix') format('embedded-opentype'),
+      url('./fonts/压缩后迷你.woff') format('woff'),
+      url('./fonts/压缩后迷你.ttf') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+ */
+      url('./fonts/压缩后迷你.svg?#miniangle') format('svg')
+
+.mini-angle
+  font-family "miniangle" !important
+  font-size 16px
+  font-style normal
+  -webkit-font-smoothing antialiased
+  -moz-osx-font-smoothing grayscale
+
+.marquee-line
+  background-image linear-gradient(90deg, rgba(0, 0, 0, 0) 0%, #000000 100%), linear-gradient(0deg, #000000 0%, rgba(0, 0, 0, 0) 100%), linear-gradient(-90deg, rgba(0, 0, 0, 0) 0%, #000000 100%), linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, #000000 100%)
+  background-repeat no-repeat, no-repeat, no-repeat, no-repeat
+  // background-size 100px 1px, 1px 100px, 100px 1px, 1px 100px
+  // background-position -50px 1px, calc(100% - 1px) -100px, calc(100% + 100px) calc(100% - 1px), 1px -50px
+  background-size 100px 4px, 4px 100px, 100px 4px, 4px 100px
+  background-position -100px 1px, calc(100% - 1px) -100px, calc(100% + 100px) calc(100% - 1px), 1px 0px
+  animation moveLine 8s infinite linear
+
+  // height calc(100% - 2px)
+  // padding 1px
+  background-clip content-box
+
+@keyframes moveLine
+  0%
+    background-position -100px 1px, calc(100% - 1px) -100px, calc(100% + 100px) calc(100% - 1px), 1px 0px
+  5%
+    background-position 0px 1px, calc(100% - 1px) -100px, calc(100% + 100px) calc(100% - 1px), 1px -100px
+  30%
+    background-position 100% 1px, calc(100% - 1px) -100px, calc(100% + 100px) calc(100% - 1px), 1px -100px
+  35%
+    background-position calc(100% + 100px) 1px, calc(100% - 1px) 0px, calc(100% + 100px) calc(100% - 1px), 1px -100px
+  50%
+    background-position calc(100% + 100px) 1px, calc(100% - 1px) 100%, calc(100% + 100px) calc(100% - 1px), -100px -100px
+  55%
+    background-position calc(100% + 100px) 1px, calc(100% - 1px) calc(100% + 100px), 100% calc(100% - 1px), -100px calc(100% + 100px)
+  80%
+    background-position calc(100% + 100px) 1px, calc(100% - 1px) calc(100% + 100px), 0px calc(100% - 1px), 1px calc(100% + 100px)
+  85%
+    background-position calc(100% + 100px) 1px, calc(100% - 1px) calc(100% + 100px), -100px calc(100% - 1px), 1px 100%
+  100%
+    background-position calc(100% + 100px) 1px, calc(100% - 1px) calc(100% + 100px), -100px calc(100% - 1px), 1px 0px
+  // 1%
+  //   background-position -100px 1px, calc(100% - 1px) -100px, calc(100% + 100px) calc(100% - 1px), 1px -100px
+  // 0%
+  //   background-position -50px 1px, calc(100% - 1px) -100px, calc(100% + 100px) calc(100% + 1px), 1px -50px
+  // 2%
+  //   background-position 0px 1px, calc(100% - 1px) -100px, calc(100% + 100px) calc(100% - 1px), 1px -100px
+  // 30%
+  //   background-position calc(100% + 50px) 1px, calc(100% - 1px) -50px, calc(100% + 100px) calc(100% - 1px), -1px -100px
+  // 32%
+  //   background-position calc(100% + 100px) 1px, calc(100% - 1px) 0px, calc(100% + 100px) calc(100% - 1px), -1px calc(100% + 100px)
+  // 50%
+  //   background-position calc(100% + 100px) -1px, calc(100% - 1px) calc(100% + 50px), calc(100% + 50px) calc(100% - 1px), 1px calc(100% + 100px)
+  // 52%
+  //   background-position -100px -1px, calc(100% - 1px) calc(100% + 100px), 100% calc(100% - 1px), 1px calc(100% + 100px)
+  // 80%
+  //   background-position -100px 1px, calc(100% + 1px) calc(100% + 100px), -50px calc(100% - 1px), 1px calc(100% + 50px)
+  // 82%
+  //   background-position -100px 1px, calc(100% + 1px) -100px, -100px calc(100% - 1px), 1px 100%
+  // 100%
+  //   background-position -50px 1px, calc(100% - 1px) -100px, -100px calc(100% + 1px), 1px -50px
+  // 0%
+  //   background-position -100px 1px, calc(100% - 1px) -100px, calc(100% + 100px) calc(100% - 1px), 1px calc(100% + 100px)
+  // 5%
+  //   background-position 100px 1px, calc(100% - 1px) -100px, calc(100% + 100px) calc(100% - 1px), 1px calc(100% + 100px)
+  // 30%
+  //   background-position calc(100% + 100px) 1px, calc(100% - 1px) -100px, calc(100% + 100px) calc(100% - 1px), 1px calc(100% + 100px)
+  // 35%
+  //   background-position calc(100% + 100px) 1px, calc(100% - 1px) 100px, calc(100% + 100px) calc(100% - 1px), 1px calc(100% + 100px)
+  // 50%
+  //   background-position calc(100% + 100px) 1px, calc(100% - 1px) calc(100% + 100px), calc(100% + 100px) calc(100% - 1px), 1px calc(100% + 100px)
+  // 55%
+  //   background-position calc(100% + 100px) 1px, calc(100% - 1px) calc(100% + 100px), calc(100% - 100px) calc(100% - 1px), 1px calc(100% + 100px)
+  // 80%
+  //   background-position calc(100% + 100px) 1px, calc(100% - 1px) calc(100% + 100px), -100px calc(100% - 1px), 1px calc(100% + 100px)
+  // 85%
+  //   background-position calc(100% + 100px) 1px, calc(100% - 1px) calc(100% + 100px), -100px calc(100% - 1px), 1px calc(100% - 100px)
+  // 100%
+  //   background-position calc(100% + 100px) 1px, calc(100% - 1px) calc(100% + 100px), -100px calc(100% - 1px), 1px -100px
+

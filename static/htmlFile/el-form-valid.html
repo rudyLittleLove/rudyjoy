@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>elementUI el-form 组件 验证 提示不能为空，以及验证不生效的详细原因</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>elementUI el-form 组件 验证 提示不能为空，以及验证不生效的详细原因</h3><ul><li><a href="#_1">唠唠嗑</a></li><li><a href="#_6">如何进行验证的</a></li><li><a href="#__42">获取验证规则 源码处写法</a></li><li><a href="#__58">获取需验证的值 源码处写法</a></li><li><a href="#_75">上述使用中常见问题场景</a></li><li><a href="#_84">结语</a></li></ul></div><p></p>
+<h1><a id="_1"></a>唠唠嗑</h1>
+<p>用<code>vue</code> + <code>elementUI</code> 开发有些日子了，经常在使用<code>el-form</code> 组件时，时不时的出现验证没生效，或者生效了在验证函数中 <code>value</code> 是 <code>undefined</code>，也细细的读了<code>elementUI</code> 的文档。有些信息交代的比较模糊，最后还是看了<code>elementUI</code> 的源码才确认下来之前一直猜测的东西。</p>
+<p>今天就专门分享一下，看<code>el-from</code> 这个组件验证相关的源码所了解到的东西。</p>
+<h1><a id="_6"></a>如何进行验证的</h1>
+<p>如果要使用<code>el-from</code> 组件的验证，必不可少的三样是</p>
+<p>1.<code>el-form</code> 组件上的 <code>model</code> 属性，这里很容易错误的写成 <code>data</code></p>
+<p>2.<code>el-form</code> 组件上的 <code>rules</code> 属性 或者 <code>el-form-item</code> 组件上的 <code>rules</code> 属性</p>
+<p>3.<code>el-form-item</code> 组件上的 <code>prop</code> 属性</p>
+<p><code>el-form</code> 组件上的 <code>model</code> 和 <code>rules</code> 一个是整个表单的数据源，一个是验证规则源。默认通过 <code>el-form-item</code> 组件上的 <code>prop</code> 获取对应源上面的数据与规则进行验证，<code>el-form-item</code> 的 <code>prop</code> 属性传入的参数被共用了，所以你会发现 <code>rules</code> 和 <code>model</code> 上面的 <code>property</code> 默认是一样的。就像下面这个例子 都是使用的 <code>name</code> 和 <code>age</code>。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+	<span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		formData<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+			name<span class="token punctuation">:</span> <span class="token string">''</span><span class="token punctuation">,</span>
+			age<span class="token punctuation">:</span> <span class="token string">''</span><span class="token punctuation">,</span>
+		<span class="token punctuation">}</span><span class="token punctuation">,</span>
+		rules<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+			name<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span> required<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span> message<span class="token punctuation">:</span> <span class="token string">'请输入名字'</span><span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+			age<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span> required<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span> message<span class="token punctuation">:</span> <span class="token string">'请输入年龄'</span><span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>也可以看 <code>elementUI</code> <a href="https://element.eleme.cn/#/zh-CN/component/form#biao-dan-yan-zheng">表单验证的demo</a>，详细看看属性对应情况。</p>
+<p>当要进行复杂的验证，比如数组的时候， 我们通过 <code>el-form-item</code> 以 <code>:prop="'domains.' + index + '.value'"</code> 这种格式（数据路径）传进去。</p>
+<p><code>elementUI</code> 有一个 公共的方法 <code>getPropByPath</code>, 循环遍历出 <code>model</code> 这个数据源中 对应的数组内的数据。<br>
+比如上方这个格式的例子，先从<code>model</code>中找<code>domains</code>这个数组，再找 <code>index</code> 也就是数组中第几个数据，再找这个数据的 <code>vlaue</code> 属性<br>
+即使是二维数组也会一层一层找下去，只要 <code>prop</code> 传递的参数正确，都能找对对应的值</p>
+<p>使用这种方式就打破了原来 <strong>数据源</strong> 和 <strong>验证规则源</strong> <code>property</code> 相同的规则，于是就只能通过 <code>el-form-item</code> 这个组件的 <code>rules</code> 属性，单独给这个组件传入 验证规则，也就是 <code>elementUI</code> <a href="https://element.eleme.cn/#/zh-CN/component/form#dong-tai-zeng-jian-biao-dan-xiang">动态增减表单项 demo</a> 处写的。</p>
+<h1><a id="__42"></a>获取验证规则 源码处写法</h1>
+<pre><code class="prism language-javascript"> <span class="token function">getRules</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">let</span> formRules <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>form<span class="token punctuation">.</span>rules<span class="token punctuation">;</span>
+   <span class="token keyword">const</span> selfRules <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>rules<span class="token punctuation">;</span>
+   <span class="token keyword">const</span> requiredRule <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>required <span class="token operator">!==</span> undefined <span class="token operator">?</span> <span class="token punctuation">{</span> required<span class="token punctuation">:</span> <span class="token operator">!</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>required <span class="token punctuation">}</span> <span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+   <span class="token keyword">const</span> prop <span class="token operator">=</span> <span class="token function">getPropByPath</span><span class="token punctuation">(</span>formRules<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>prop <span class="token operator">||</span> <span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   formRules <span class="token operator">=</span> formRules <span class="token operator">?</span> <span class="token punctuation">(</span>prop<span class="token punctuation">.</span>o<span class="token punctuation">[</span><span class="token keyword">this</span><span class="token punctuation">.</span>prop <span class="token operator">||</span> <span class="token string">''</span><span class="token punctuation">]</span> <span class="token operator">||</span> prop<span class="token punctuation">.</span>v<span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+   <span class="token keyword">return</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">concat</span><span class="token punctuation">(</span>selfRules <span class="token operator">||</span> formRules <span class="token operator">||</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">concat</span><span class="token punctuation">(</span>requiredRule<span class="token punctuation">)</span><span class="token punctuation">;</span>
+ <span class="token punctuation">}</span><span class="token punctuation">,</span>
+</code></pre>
+<p>从获取验证规则最后一句就可以看出，默认最优先取 <code>selfRules</code> 也就是通过 <code>el-form-item</code> 的 <code>rules</code> 属性传入的，其次就是通过 <code>el-form</code> 的 <code>rules</code> 属性 获取的 <code>formRules</code>。</p>
+<h1><a id="__58"></a>获取需验证的值 源码处写法</h1>
+<pre><code class="prism language-javascript"> <span class="token function">fieldValue</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token keyword">const</span> model <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>form<span class="token punctuation">.</span>model<span class="token punctuation">;</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>model <span class="token operator">||</span> <span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>prop<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token keyword">return</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+
+   <span class="token keyword">let</span> path <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>prop<span class="token punctuation">;</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span>path<span class="token punctuation">.</span><span class="token function">indexOf</span><span class="token punctuation">(</span><span class="token string">':'</span><span class="token punctuation">)</span> <span class="token operator">!==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+     path <span class="token operator">=</span> path<span class="token punctuation">.</span><span class="token function">replace</span><span class="token punctuation">(</span><span class="token regex">/:/</span><span class="token punctuation">,</span> <span class="token string">'.'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+
+   <span class="token keyword">return</span> <span class="token function">getPropByPath</span><span class="token punctuation">(</span>model<span class="token punctuation">,</span> path<span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">.</span>v<span class="token punctuation">;</span>
+ <span class="token punctuation">}</span><span class="token punctuation">,</span>
+</code></pre>
+<p>这里可以看到 <code>el-form-item</code> 的 <code>prop</code> 属性没传参数 或者 <code>el-form</code> 的 <code>model</code> 没传参数 都不会往下走，也就是即使进入验证规则中，<code>value</code> 值也是 <code>undefined</code>。</p>
+<h1><a id="_75"></a>上述使用中常见问题场景</h1>
+<p><strong>1  验证函数没进入，或者验证都不出现</strong><br>
+这种情况 <code>el-form</code> 上的 <code>rules</code> 忘记写了，或者 <code>el-form-item</code> 上的 <code>prop</code> 的值并不存在与 <strong>验证规则源</strong>中，或者使用类似动态增删的方式，未单独给<code>el-form-item</code> 的 <code>rules</code> 属性添加验证规则</p>
+<p><strong>2 验证函数进入，<code>value</code> 是 <code>undefined</code></strong><br>
+这种情况 一般是 <code>el-form</code> 上的 <code>model</code> 没写 或者写错，或者是 <code>el-form-item</code> 通过 <code>prop</code> 传入的 <code>property</code> 在 <code>model</code> 传入的数据源 中 找不到对应的参数，对照修改一下就行。</p>
+<p>整体来看，<code>el-form</code> 这个组件的验证其实还是写得还是很通俗易懂的，主要的验证处理都在 <code>el-form-item</code> 这个组件上了，<code>el-form</code> 也只承担了公共的数据源存储，以及公共方法的调用。</p>
+<h1><a id="_84"></a>结语</h1>
+<p>好了，加班时间算是打发过去了，该下班了 ^ _ ^。</p>
+<p>以上信息如有错误或疏漏，欢迎指正哈，谢谢。</p>
+</div>
+</body>
+
+</html>

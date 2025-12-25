@@ -1,0 +1,50 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iView DatePicker 组件 选择年/月 下拉框异常收缩</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>iView DatePicker 组件 选择年/月 下拉框异常收缩</h3><ul><li><a href="#_1">引言</a></li><li><a href="#bug__4">bug 详细信息</a></li><li><a href="#bug__7">bug 出现原因</a></li><li><a href="#_43">结语</a></li></ul></div><p></p>
+<h1><a id="_1"></a>引言</h1>
+<p>上头新分给我一个之前延期处理的 <code>bug</code>，就是标题描述的 <code>bug</code>，<code>iView</code> 的 <code>DatePicker</code> 组件，在选择年或者月的情况会异常收缩起来。正常不应该收缩起来，因为选择年后还要选择月份，选择月份后还要选择天数。参照 <code>iView</code> 的 <code>demo</code> 发现用法并无问题，第一想到的就是当前这个项目有 <code>iView</code> 的全局配置 或者 某些插件功能冲突（项目是前同事写的，我不知道有哪些全局配置），最后发现是一个全局配置影响的，而且这算是<code>iView</code> 的一个bug，下面用图说明一下。</p>
+<h1><a id="bug__4"></a>bug 详细信息</h1>
+<p><img src="https://img-blog.csdnimg.cn/20200721100116894.gif" alt="在这里插入图片描述"><br>
+从动图很明显能看到bug。</p>
+<h1><a id="bug__7"></a>bug 出现原因</h1>
+<p>解释一个 <code>:capture="false"</code> 这个<code>capture</code> 是 <code>iView</code> 4.x 新加的全局配置属性，原话是<br>
+<img src="https://img-blog.csdnimg.cn/20200721100320894.png" alt="在这里插入图片描述"><br>
+默认值是 <code>true</code> ，所以官方 <code>Demo</code> 并无问题，而是在项目中（一般是在<code>main.js</code>）配置了 <code>iView</code> 的全局配置</p>
+<pre><code class="prism language-javascript">Vue<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span>iView<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+	capture<span class="token punctuation">:</span> <span class="token boolean">false</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<p>这算是一个 <code>iView</code> 的bug，解决方案是 全局的删除（因为默认就是<code>true</code>），或者在每个<code>DatePicker</code>  使用处添加 <code>:capture="false"</code></p>
+<pre><code class="prism language-javascript"><span class="token operator">&lt;</span>DatePicker type<span class="token operator">=</span><span class="token string">"date"</span> <span class="token punctuation">:</span>capture<span class="token operator">=</span><span class="token string">"trie"</span> placeholder<span class="token operator">=</span><span class="token string">"Select date"</span> style<span class="token operator">=</span><span class="token string">"width: 200px"</span><span class="token operator">&gt;</span><span class="token operator">&lt;</span><span class="token operator">/</span>DatePicker<span class="token operator">&gt;</span>
+</code></pre>
+<p><code>DatePicker</code> 源码是这样的最外层标签添加了这些属性，虽然其他下拉也用到了，但是我并没有测出问题（有兴趣可以去看）。</p>
+<pre><code class="prism language-javascript"><span class="token operator">&lt;</span>div
+	v<span class="token operator">-</span>click<span class="token operator">-</span>outside<span class="token punctuation">:</span><span class="token punctuation">[</span>capture<span class="token punctuation">]</span><span class="token punctuation">.</span>mousedown<span class="token operator">=</span><span class="token string">"handleClose"</span>
+	v<span class="token operator">-</span>click<span class="token operator">-</span>outside<span class="token punctuation">:</span><span class="token punctuation">[</span>capture<span class="token punctuation">]</span><span class="token punctuation">.</span>touchstart<span class="token operator">=</span><span class="token string">"handleClose"</span>
+	v<span class="token operator">-</span>click<span class="token operator">-</span>outside<span class="token punctuation">:</span><span class="token punctuation">[</span>capture<span class="token punctuation">]</span><span class="token operator">=</span><span class="token string">"handleClose"</span><span class="token operator">&gt;</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">&gt;</span>
+</code></pre>
+<p><code>DatePicker</code> 的 <code>props</code> 添加了</p>
+<pre><code class="prism language-javascript"> <span class="token comment">// 4.0.0</span>
+ capture<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+     type<span class="token punctuation">:</span> Boolean<span class="token punctuation">,</span>
+     <span class="token keyword">default</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+         <span class="token keyword">return</span> <span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>$<span class="token constant">IVIEW</span> <span class="token operator">?</span> <span class="token boolean">true</span> <span class="token punctuation">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>$<span class="token constant">IVIEW</span><span class="token punctuation">.</span>capture<span class="token punctuation">;</span>
+     <span class="token punctuation">}</span>
+ <span class="token punctuation">}</span>
+</code></pre>
+<h1><a id="_43"></a>结语</h1>
+<p>好了以上就这么多，小伙伴们在使用插件时定位不到问题，可以去看源码，其实源码并不复杂，跟你自己写的代码一样。解决bug就是要了解他出问题的地方，等我有空就去 <code>iView</code> 上提 <code>issuse</code>，今天工作记录就分享到这里，有问题，欢迎留言询问。嘿嘿</p>
+</div>
+</body>
+
+</html>

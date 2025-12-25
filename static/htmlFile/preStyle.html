@@ -1,0 +1,247 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS 预编译语言 变量全局引用方式 vue-cli@3.0  stylus/sass/less 使用方法</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>CSS 预编译语言 变量全局引用方式 vue-cli@3.0  stylus/sass/less 使用方法</h3><ul><li><a href="#_2">引言</a></li><li><a href="#stylus_7">stylus篇</a></li><ul><li><a href="#stylusvue_8">stylus文件与vue组件样式代码</a></li><li><a href="#stylus__23">stylus 全局变量引入方法一</a></li><li><a href="#stylus__38">stylus 全局变量引入方法二</a></li><li><a href="#stylus__61">stylus 全局变量引入方法三</a></li></ul><li><a href="#sassscss_80">sass/scss篇</a></li><ul><li><a href="#sassscssvue_81">sass/scss文件与vue组件样式代码</a></li><li><a href="#sass__96">sass 全局变量引入方法一</a></li><li><a href="#sass__119">sass 全局变量引入方法二</a></li><li><a href="#sass__159">sass 全局变量引入方法三</a></li></ul><li><a href="#less_178">less篇</a></li><ul><li><a href="#lessvue_179">less文件与vue组件样式代码</a></li><li><a href="#less__197">less 全局变量引入方法一</a></li><li><a href="#less__214">less 全局变量引入方法二</a></li><li><a href="#less__237">less 全局变量引入方法三</a></li></ul><li><a href="#_254">总结</a></li><ul><li><a href="#_255">问题</a></li></ul></ul></div><p></p>
+<h1><a id="_2"></a>引言</h1>
+<p>网上相关博客与教程很多，但是解决方式有些不明确，在此统一总结一下sass、stylus、less预编译css全局引用方法，每个均介绍三种方案，皆为本人实测，以下方案为vue-cli@3.0使用方法，使用较低版本的前端朋友可以参考，本人精力有限，暂时就只提供3.0版本解决方案。</p>
+<p><strong>因为有的小伙伴有一种或多种方法不生效，因此写了一个简单的例子，可以通过github下载，sass、less、stylus的三种方案都有</strong><br>
+代码地址：<a href="https://github.com/rudyLittleLove/global-variable">https://github.com/rudyLittleLove/global-variable</a></p>
+<h1><a id="stylus_7"></a>stylus篇</h1>
+<h2><a id="stylusvue_8"></a>stylus文件与vue组件样式代码</h2>
+<pre><code class="prism language-css"><span class="token comment">/* variable.styl*/</span>
+$color = #00ffff
+</code></pre>
+<pre><code class="prism language-javascript"><span class="token comment">// vue组件内的style标签，将要使用上述变量的地方</span>
+<span class="token operator">&lt;</span>style lang<span class="token operator">=</span><span class="token string">"stylus"</span><span class="token operator">&gt;</span>
+<span class="token punctuation">.</span>stylus
+  <span class="token operator">&gt;</span> div
+    color $color
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">&gt;</span>
+</code></pre>
+<h2><a id="stylus__23"></a>stylus 全局变量引入方法一</h2>
+<p>使用<strong>css.loaderOptions</strong></p>
+<pre><code class="prism language-javascript">module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+  css<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    loaderOptions<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      stylus<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        <span class="token keyword">import</span><span class="token punctuation">:</span> <span class="token string">"~@/assets/variable.styl"</span>
+        <span class="token comment">// import: ["~@/assets/variable.styl", "~@/assets/variable2.styl"]</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2><a id="stylus__38"></a>stylus 全局变量引入方法二</h2>
+<p>使用<strong>chainWebpack</strong><br>
+需要安装 <strong>style-resources-loader</strong> 插件</p>
+<pre><code class="prism language-javascript">module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+  chainWebpack<span class="token punctuation">:</span> config <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+	<span class="token keyword">const</span> oneOfsMap <span class="token operator">=</span> config<span class="token punctuation">.</span>module<span class="token punctuation">.</span><span class="token function">rule</span><span class="token punctuation">(</span><span class="token string">"stylus"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>oneOfs<span class="token punctuation">.</span>store<span class="token punctuation">;</span>
+    oneOfsMap<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>item <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+      item
+        <span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span><span class="token string">"style-resources-loader"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">loader</span><span class="token punctuation">(</span><span class="token string">"style-resources-loader"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">options</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          <span class="token comment">// 需要插入的文件路径</span>
+          patterns<span class="token punctuation">:</span> <span class="token string">"./src/assets/variable.styl"</span>
+          <span class="token comment">// 需要插入的文件路径数组</span>
+          <span class="token comment">// patterns: ["./path/to/vars.styl", "./path/to/mixins.styl"]</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2><a id="stylus__61"></a>stylus 全局变量引入方法三</h2>
+<p>使用<strong>pluginOptions</strong><br>
+需要执行 <strong>vue add style-resources-loader</strong>命令<br>
+命令执行会自动安装 <strong>vue-cli-plugin-style-resources-loader</strong>会自动提示使用什么预编译语言、会根据你选择的自动配置，只需要填写 引用文件的路径<br>
+友情提示：如果使用此方法安装了以上插件，而又放弃这种方案，编译时可能会报错，可以<strong>npm uninstall vue-cli-plugin-style-resources-loader</strong> 卸载此插件。</p>
+<pre><code class="prism language-javascript">module<span class="token punctuation">.</span>exports <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  pluginOptions<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    <span class="token string">"style-resources-loader"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      preProcessor<span class="token punctuation">:</span> <span class="token string">"stylus"</span><span class="token punctuation">,</span>
+      patterns<span class="token punctuation">:</span> <span class="token string">"./src/assets/variable.styl"</span>
+      <span class="token comment">// patterns: ["./src/assets/variable.styl"]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="https://img-blog.csdnimg.cn/20191226163935137.gif" alt="stylue 全局变量引入方法"></p>
+<h1><a id="sassscss_80"></a>sass/scss篇</h1>
+<h2><a id="sassscssvue_81"></a>sass/scss文件与vue组件样式代码</h2>
+<pre><code class="prism language-css"><span class="token comment">/* variable.scss */</span>
+$<span class="token property">color</span><span class="token punctuation">:</span> orange<span class="token punctuation">;</span>
+</code></pre>
+<pre><code class="prism language-javascript"><span class="token comment">// vue组件内的style标签，将要使用上述变量的地方</span>
+<span class="token operator">&lt;</span>style lang<span class="token operator">=</span><span class="token string">"scss"</span><span class="token operator">&gt;</span>
+<span class="token punctuation">.</span>scss div <span class="token punctuation">{</span>
+  color<span class="token punctuation">:</span> $color<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">&gt;</span>
+</code></pre>
+<h2><a id="sass__96"></a>sass 全局变量引入方法一</h2>
+<p>使用<strong>css.loaderOptions</strong><br>
+此处友情提示 sass-loader v7 之前使用 data：’’ 之后使用prependData：‘’请根据项目sass-loader版本选择<br>
+<strong>重点提示！！！！ 引用处分号“；”不能缺少</strong>，缺少直接报错，因为此方法是直接插入语句块至项目中使用sass语法的标签内，sass语法强制必须使用分号“；”结尾，更详细讲解请参考vue-cli官方文档。<br>
+<a href="https://cli.vuejs.org/zh/guide/css.html#%E5%90%91%E9%A2%84%E5%A4%84%E7%90%86%E5%99%A8-loader-%E4%BC%A0%E9%80%92%E9%80%89%E9%A1%B9">vue-cli向预处理器 Loader 传递选项</a><br>
+sass与scss区别请别处学习<br>
+<a href="http://sass.bootcss.com/docs/scss-for-sass-users/">SCSS 与 Sass 异同</a></p>
+<pre><code class="prism language-javascript">module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+  css<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    loaderOptions<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      sass<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        <span class="token comment">// data：`@import "~@/assets/variable.scss";` v7之前使用 的是data，现在改成了prependData</span>
+        prependData<span class="token punctuation">:</span> <span class="token template-string"><span class="token string">`@import "~@/assets/variable.scss";`</span></span>
+        <span class="token comment">/* prependData: `
+              @import "~@/assets/variable.scss";
+              @import "~@/assets/variable2.scss";
+          ` */</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2><a id="sass__119"></a>sass 全局变量引入方法二</h2>
+<p>使用<strong>chainWebpack</strong><br>
+根据使用方法选择安装插件 <strong>style-resources-loader</strong>或者<strong>sass-resource-loader</strong><br>
+友情提醒：**patterns: “./src/assets/variable.scss”**引用的scss文件，如果文件内语法存在问题，也会直接报错，此处不需要在引用处最后添加分号“；”，文件内请根据sass与scss语法规则编辑，如果我没有料错，此方法应该是把引用文件的内容插入目标文件，而非上文方法提到的插入一个import<br>
+使用方法代码如下：</p>
+<pre><code class="prism language-javascript">module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+  chainWebpack<span class="token punctuation">:</span> config <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+	<span class="token comment">// 需要安装 style-resources-loader 插件</span>
+    <span class="token keyword">const</span> oneOfsMap <span class="token operator">=</span> config<span class="token punctuation">.</span>module<span class="token punctuation">.</span><span class="token function">rule</span><span class="token punctuation">(</span><span class="token string">"scss"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>oneOfs<span class="token punctuation">.</span>store<span class="token punctuation">;</span>
+    oneOfsMap<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>item <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+      item
+        <span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span><span class="token string">"style-resources-loader"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">loader</span><span class="token punctuation">(</span><span class="token string">"style-resources-loader"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">options</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          <span class="token comment">// 需要插入的文件路径</span>
+          patterns<span class="token punctuation">:</span> <span class="token string">"./src/assets/variable.scss"</span>
+          <span class="token comment">// 需要插入的文件路径数组</span>
+          <span class="token comment">// patterns: ["./path/to/vars.styl", "./path/to/mixins.styl"]</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// 也可以使用 sass-resource-loader 插件</span>
+    <span class="token comment">// const oneOfsMap = config.module.rule("scss").oneOfs.store;</span>
+    <span class="token comment">// oneOfsMap.forEach(item =&gt; {</span>
+    <span class="token comment">//   item</span>
+    <span class="token comment">//     .use("sass-resources-loader")</span>
+    <span class="token comment">//     .loader("sass-resources-loader")</span>
+    <span class="token comment">//     .options({</span>
+    <span class="token comment">//       // 需要插入的文件路径</span>
+    <span class="token comment">//       resources: "./src/assets/variable.scss"</span>
+    <span class="token comment">//       // 需要插入的文件路径数组</span>
+    <span class="token comment">//       // resources: ["./path/to/vars.scss", "./path/to/mixins.scss"]</span>
+    <span class="token comment">//     })</span>
+     <span class="token comment">//    .end();</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2><a id="sass__159"></a>sass 全局变量引入方法三</h2>
+<p>使用<strong>pluginOptions</strong><br>
+需要执行 <strong>vue add style-resources-loader</strong>命令<br>
+命令执行会自动安装 <strong>vue-cli-plugin-style-resources-loader</strong>会自动提示使用什么预编译语言、会根据你选择的自动配置，只需要填写 引用文件的路径<br>
+友情提示：如果使用此方法安装了以上插件，而又放弃这种方案，编译时可能会报错，可以<strong>npm uninstall vue-cli-plugin-style-resources-loader</strong> 卸载此插件。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">const</span> path <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"path"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+  pluginOptions<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    <span class="token string">"style-resources-loader"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      preProcessor<span class="token punctuation">:</span> <span class="token string">"scss"</span><span class="token punctuation">,</span>
+	<span class="token comment">//  patterns: "./src/assets/variable.scss",</span>
+      patterns<span class="token punctuation">:</span> <span class="token punctuation">[</span>path<span class="token punctuation">.</span><span class="token function">resolve</span><span class="token punctuation">(</span>__dirname<span class="token punctuation">,</span> <span class="token string">"./src/assets/variable.scss"</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="https://img-blog.csdnimg.cn/20191226164007976.gif" alt="stylus 全局变量引入方法"></p>
+<h1><a id="less_178"></a>less篇</h1>
+<h2><a id="lessvue_179"></a>less文件与vue组件样式代码</h2>
+<pre><code class="prism language-css"><span class="token comment">/* variable.less */</span>
+<span class="token atrule"><span class="token rule">@color</span><span class="token punctuation">:</span> pink<span class="token punctuation">;</span></span>
+</code></pre>
+<pre><code class="prism language-javascript"><span class="token comment">// vue组件内的style标签，将要使用上述变量的地方</span>
+<span class="token operator">&lt;</span>style lang<span class="token operator">=</span><span class="token string">"less"</span><span class="token operator">&gt;</span>
+<span class="token punctuation">.</span>less <span class="token punctuation">{</span>
+  <span class="token operator">&gt;</span> div <span class="token punctuation">{</span>
+    color<span class="token punctuation">:</span> @color<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">&gt;</span>
+</code></pre>
+<h2><a id="less__197"></a>less 全局变量引入方法一</h2>
+<p>使用<strong>css.loaderOptions</strong><br>
+less此方法只支持变量key:value赋值，若要使用less文件中变量，请使用以下两种方案</p>
+<pre><code class="prism language-javascript">module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+  css<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+  	loaderOptions<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+	  less<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        globalVars<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+          <span class="token string">"@color"</span><span class="token punctuation">:</span> <span class="token string">"#f00"</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2><a id="less__214"></a>less 全局变量引入方法二</h2>
+<p>使用<strong>chainWebpack</strong><br>
+需要安装 <strong>style-resources-loader</strong> 插件</p>
+<pre><code class="prism language-javascript">module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+  chainWebpack<span class="token punctuation">:</span> config <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+	<span class="token comment">// 需要安装 style-resources-loader 与stylus一致</span>
+    <span class="token keyword">const</span> oneOfsMap <span class="token operator">=</span> config<span class="token punctuation">.</span>module<span class="token punctuation">.</span><span class="token function">rule</span><span class="token punctuation">(</span><span class="token string">"less"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>oneOfs<span class="token punctuation">.</span>store<span class="token punctuation">;</span>
+    oneOfsMap<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>item <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+      item
+        <span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span><span class="token string">"style-resources-loader"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">loader</span><span class="token punctuation">(</span><span class="token string">"style-resources-loader"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">options</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          <span class="token comment">// 需要插入的文件路径</span>
+          patterns<span class="token punctuation">:</span> <span class="token string">"./src/assets/variable.less"</span>
+          <span class="token comment">// 需要插入的文件路径数组</span>
+          <span class="token comment">// patterns: ["./path/to/vars.less", "./path/to/mixins.less"]</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2><a id="less__237"></a>less 全局变量引入方法三</h2>
+<p>使用<strong>pluginOptions</strong><br>
+需要执行 <strong>vue add style-resources-loader</strong>命令<br>
+命令执行会自动安装 <strong>vue-cli-plugin-style-resources-loader</strong>会自动提示使用什么预编译语言、会根据你选择的自动配置，只需要填写 引用文件的路径<br>
+友情提示：如果使用此方法安装了以上插件，而又放弃这种方案，编译时可能会报错，可以<strong>npm uninstall vue-cli-plugin-style-resources-loader</strong> 卸载此插件。</p>
+<pre><code class="prism language-javascript">module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+  pluginOptions<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+  	<span class="token string">"style-resources-loader"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      preProcessor<span class="token punctuation">:</span> <span class="token string">"less"</span><span class="token punctuation">,</span>
+      patterns<span class="token punctuation">:</span> <span class="token string">"./src/assets/variable.less"</span>
+      <span class="token comment">// patterns: ["./src/assets/variable.less"]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="https://img-blog.csdnimg.cn/20191226164041747.gif" alt="less 全局变量引入方法"></p>
+<h1><a id="_254"></a>总结</h1>
+<h2><a id="_255"></a>问题</h2>
+<p>使用<strong>path</strong>与不使用区别请自行学习，本文乃各种用法演示<br>
+<a href="http://nodejs.cn/api/path.html">http://nodejs.cn/api/path.html</a></p>
+<p>以上解决方案带来的实际效果是变量插入到了目标文件，但不单单是变量会插入，链接文件所有数据都会插入到目标文件中，比如css 函数、mixin 也是一样的，借用此方式可以完成更多功能，大家可以自行思考。</p>
+<p>再贴一遍以上例子的github仓库地址<br>
+<a href="https://github.com/rudyLittleLove/global-variable">https://github.com/rudyLittleLove/global-variable</a></p>
+<p>如有错误，欢迎指正，谢谢</p>
+</div>
+</body>
+
+</html>

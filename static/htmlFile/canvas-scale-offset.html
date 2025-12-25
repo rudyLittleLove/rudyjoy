@@ -1,0 +1,647 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>使用canvas 如何绘制形状并支持拖拽、缩放功能</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>使用canvas 如何绘制形状并支持拖拽、缩放功能</h3><ul><li><a href="#_2">引言</a></li><li><a href="#_5">开始编写</a></li><ul><li><a href="#_28">首先绘制一个形状</a></li><li><a href="#_80">绘制多个、多种类型形状</a></li><li><a href="#_182">添加缩放功能</a></li><li><a href="#_397">添加拖拽画布的效果</a></li><li><a href="#_477">拖拽画布中的形状</a></li><ul><li><a href="#_687">判断是否处于形状内部方法解释</a></li></ul></ul><li><a href="#_707">总结</a></li></ul></div><p></p>
+<h1><a id="_2"></a>引言</h1>
+<p>   之前遇到过一个面试的机试题，就是用画布绘制形状，并且支持缩放、拖拽功能。现在有点时间就分享一下我是如何一步一步完成这个功能的。看这篇信息之前最好先去看一下<code>canvas</code> 的 <code>api</code>，<a href="https://www.runoob.com/tags/ref-canvas.html">canvas API 穿梭机。</a><br>
+<br></p>
+<h1><a id="_5"></a>开始编写</h1>
+<p>先写出容器Dom，和样式<br>
+html</p>
+<pre><code class="prism language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>chart-wrap<span class="token punctuation">"</span></span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>chart-wrap<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+</code></pre>
+<p>css</p>
+<pre><code class="prism language-css"><span class="token selector">html,body</span> <span class="token punctuation">{</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+  <span class="token property">height</span><span class="token punctuation">:</span> 100%<span class="token punctuation">;</span>
+  <span class="token property">overflow</span><span class="token punctuation">:</span> hidden<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">.chart-wrap</span> <span class="token punctuation">{</span>
+  <span class="token property">height</span><span class="token punctuation">:</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% - 40px<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> 20px<span class="token punctuation">;</span>
+  <span class="token property">box-shadow</span><span class="token punctuation">:</span> 0 0 3px orange<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<br>
+<h2><a id="_28"></a>首先绘制一个形状</h2>
+<p>这里写一个 名叫 <code>chart</code> 的类，在 构造器 <code>constructor</code> 里初始化画布，写好绘制形状的函数、以及画布渲染。代码如下：</p>
+<pre><code class="prism language-javascript"><span class="token keyword">class</span> <span class="token class-name">chart</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 初始构造器</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span>params<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> wrapDomStyle <span class="token operator">=</span> <span class="token function">getComputedStyle</span><span class="token punctuation">(</span>params<span class="token punctuation">.</span>el<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>width <span class="token operator">=</span> <span class="token function">parseInt</span><span class="token punctuation">(</span>wrapDomStyle<span class="token punctuation">.</span>width<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>height <span class="token operator">=</span> <span class="token function">parseInt</span><span class="token punctuation">(</span>wrapDomStyle<span class="token punctuation">.</span>height<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 创建canvas画布</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>El <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">createElement</span><span class="token punctuation">(</span><span class="token string">'canvas'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span>height <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>height<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span>width <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>width<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>ctx <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span><span class="token function">getContext</span><span class="token punctuation">(</span><span class="token string">'2d'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    params<span class="token punctuation">.</span>el<span class="token punctuation">.</span><span class="token function">appendChild</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token comment">// 绘制圆形</span>
+  <span class="token function">drawCircle</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span><span class="token function">beginPath</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span>fillStyle <span class="token operator">=</span> data<span class="token punctuation">.</span>fillStyle<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span><span class="token function">arc</span><span class="token punctuation">(</span>data<span class="token punctuation">.</span>x<span class="token punctuation">,</span> data<span class="token punctuation">.</span>y<span class="token punctuation">,</span> data<span class="token punctuation">.</span>r<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">2</span> <span class="token operator">*</span> Math<span class="token punctuation">.</span><span class="token constant">PI</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span><span class="token function">fill</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token comment">// 添加形状</span>
+  <span class="token function">push</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">drawCircle</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 构建图表对象</span>
+<span class="token keyword">var</span> chartObj <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">chart</span><span class="token punctuation">(</span> <span class="token punctuation">{</span> el<span class="token punctuation">:</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">'chart-wrap'</span><span class="token punctuation">)</span> <span class="token punctuation">}</span> <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 绘制圆形</span>
+chartObj<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  fillStyle<span class="token punctuation">:</span> <span class="token string">'pink'</span><span class="token punctuation">,</span>
+  x<span class="token punctuation">:</span> <span class="token number">400</span><span class="token punctuation">,</span>
+  y<span class="token punctuation">:</span> <span class="token number">300</span><span class="token punctuation">,</span>
+  r<span class="token punctuation">:</span> <span class="token number">50</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<p>上面代码结构很简单，<code>new</code> 一个对象，传入容器Dom，在<code>constructor</code> 中初始化一个画布放入 <code>div#chart-wrap</code> 这个 <code>dom</code> 中，再把创建好的实例赋值给 <code>chartObj</code> 这个变量。</p>
+<p>通过调用类的 <code>push</code> 方法，绘制一个圆形。</p>
+<p><a href="http://jsrun.net/kI2Kp">代码效果点击此处观看</a><br>
+<br></p>
+<h2><a id="_80"></a>绘制多个、多种类型形状</h2>
+<p>如果想绘制其他图形就需要加 <code>type</code> 判断，以上代码改造完成后如下：</p>
+<pre><code class="prism language-javascript"><span class="token keyword">class</span> <span class="token class-name">chart</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 初始构造器</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span>params<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> wrapDomStyle <span class="token operator">=</span> <span class="token function">getComputedStyle</span><span class="token punctuation">(</span>params<span class="token punctuation">.</span>el<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>width <span class="token operator">=</span> <span class="token function">parseInt</span><span class="token punctuation">(</span>wrapDomStyle<span class="token punctuation">.</span>width<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>height <span class="token operator">=</span> <span class="token function">parseInt</span><span class="token punctuation">(</span>wrapDomStyle<span class="token punctuation">.</span>height<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 创建canvas画布</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>El <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">createElement</span><span class="token punctuation">(</span><span class="token string">'canvas'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span>height <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>height<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span>width <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>width<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>ctx <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span><span class="token function">getContext</span><span class="token punctuation">(</span><span class="token string">'2d'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    params<span class="token punctuation">.</span>el<span class="token punctuation">.</span><span class="token function">appendChild</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token comment">// 绘制圆形</span>
+  <span class="token function">drawCircle</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span><span class="token function">beginPath</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span>fillStyle <span class="token operator">=</span> data<span class="token punctuation">.</span>fillStyle<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span><span class="token function">arc</span><span class="token punctuation">(</span>data<span class="token punctuation">.</span>x<span class="token punctuation">,</span> data<span class="token punctuation">.</span>y<span class="token punctuation">,</span> data<span class="token punctuation">.</span>r<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">2</span> <span class="token operator">*</span> Math<span class="token punctuation">.</span><span class="token constant">PI</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span><span class="token function">fill</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token comment">// _____________ 添加绘制线条方法 ____________</span>
+  <span class="token function">drawLine</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> arr <span class="token operator">=</span> data<span class="token punctuation">.</span>data<span class="token punctuation">.</span><span class="token function">concat</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">var</span> ctx <span class="token operator">=</span> ctx <span class="token operator">||</span> <span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">;</span>  
+
+    ctx<span class="token punctuation">.</span><span class="token function">beginPath</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    ctx<span class="token punctuation">.</span><span class="token function">moveTo</span><span class="token punctuation">(</span>arr<span class="token punctuation">.</span><span class="token function">shift</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> arr<span class="token punctuation">.</span><span class="token function">shift</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    ctx<span class="token punctuation">.</span>lineWidth <span class="token operator">=</span> data<span class="token punctuation">.</span>lineWidth <span class="token operator">||</span> <span class="token number">1</span>
+    <span class="token keyword">do</span><span class="token punctuation">{</span>
+      ctx<span class="token punctuation">.</span><span class="token function">lineTo</span><span class="token punctuation">(</span>arr<span class="token punctuation">.</span><span class="token function">shift</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> arr<span class="token punctuation">.</span><span class="token function">shift</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">while</span> <span class="token punctuation">(</span>arr<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+
+    ctx<span class="token punctuation">.</span><span class="token function">stroke</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token comment">// ___________ 添加绘制矩形方法 ______________</span>
+  <span class="token function">drawRect</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span><span class="token function">beginPath</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span>fillStyle <span class="token operator">=</span> data<span class="token punctuation">.</span>fillStyle<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span><span class="token function">fillRect</span><span class="token punctuation">(</span><span class="token operator">...</span>data<span class="token punctuation">.</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token comment">// ___________ 添加一个判断类型绘制的方法 _____________</span>
+  <span class="token function">draw</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>type<span class="token punctuation">)</span><span class="token punctuation">{</span>
+      <span class="token keyword">case</span> <span class="token string">'line'</span><span class="token punctuation">:</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">drawLine</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span>
+      <span class="token keyword">case</span> <span class="token string">'rect'</span><span class="token punctuation">:</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">drawRect</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span>
+      <span class="token keyword">case</span> <span class="token string">'circle'</span><span class="token punctuation">:</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">drawCircle</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token comment">// 添加形状</span>
+  <span class="token function">push</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">draw</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// ____________ 修改调用绘制方法 ____________</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 构建图表对象</span>
+<span class="token keyword">var</span> chartObj <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">chart</span><span class="token punctuation">(</span> <span class="token punctuation">{</span> el<span class="token punctuation">:</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">'chart-wrap'</span><span class="token punctuation">)</span> <span class="token punctuation">}</span> <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 绘制圆形</span>
+chartObj<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  type<span class="token punctuation">:</span> <span class="token string">'circle'</span><span class="token punctuation">,</span> <span class="token comment">// ____________ 这里添加了一个类型 __________________</span>
+  fillStyle<span class="token punctuation">:</span> <span class="token string">'pink'</span><span class="token punctuation">,</span>
+  x<span class="token punctuation">:</span> <span class="token number">400</span><span class="token punctuation">,</span>
+  y<span class="token punctuation">:</span> <span class="token number">300</span><span class="token punctuation">,</span>
+  r<span class="token punctuation">:</span> <span class="token number">50</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// ___________ 添加绘制线条 __________</span>
+chartObj<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  type<span class="token punctuation">:</span> <span class="token string">'line'</span><span class="token punctuation">,</span>
+  lineWidth<span class="token punctuation">:</span> <span class="token number">4</span><span class="token punctuation">,</span>
+  data<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token number">90</span><span class="token punctuation">,</span> <span class="token number">200</span><span class="token punctuation">,</span> <span class="token number">90</span><span class="token punctuation">,</span> <span class="token number">250</span><span class="token punctuation">,</span> <span class="token number">200</span><span class="token punctuation">,</span> <span class="token number">400</span><span class="token punctuation">,</span> <span class="token number">200</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token comment">// ___________ 添加绘制矩形 __________</span>
+chartObj<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  type<span class="token punctuation">:</span> <span class="token string">'rect'</span><span class="token punctuation">,</span>
+  fillStyle<span class="token punctuation">:</span> <span class="token string">"#0f00ff"</span><span class="token punctuation">,</span>
+  data<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token number">350</span><span class="token punctuation">,</span> <span class="token number">400</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<p>对比前面这里添加了一个绘制矩形（<code>drawRect</code>）、绘制线条(<code>drawLine</code>)的方法 和 数据，并且添加了判断渲染类型的函数(<code>draw</code>)。</p>
+<p><a href="http://jsrun.net/YI2Kp">代码效果点击此处观看</a><br>
+<br></p>
+<h2><a id="_182"></a>添加缩放功能</h2>
+<p>添加缩放需要先理清一些东西。</p>
+<p>缩放 <code>canvas</code> 提供了两个类型方法可以实现，一个是在当前缩放基础上缩放，一个是在基础画布上缩放。</p>
+<p><strong>矩阵变化不只有缩放，但是可以其他参数不变只更改缩放值</strong></p>
+<p>当前缩放基础上缩放：<code>scale()</code>缩放当前绘图至更大或更小，<code>transform()</code>替换绘图的当前转换矩阵;<br>
+<strong>  <font size="1">意思就是原本画布大小是 1，第一次放大 2倍，就变成2，第二次放大2倍就变成4</font></strong></p>
+<p>在基础画布上缩放: <code>setTransform()</code>将当前转换重置为单位矩阵。然后运行 transform()。<br>
+<strong>  <font size="1">意思就是原本画布大小是 1，第一次放大 2倍，就变成2，第二次放大2倍还是2，因为重置回原来的1后再放大的</font></strong></p>
+<p>这里我使用 <code>setTransform()</code> 缩放画布</p>
+<p><strong>第一步骤</strong>：.因为要缩放所以必须保存好当前的缩放值，就在<code>constructor</code> 加以下参数，以及在 <code>push()</code> 方法下保存数据、<code>render()</code> 重绘所有数据</p>
+<pre><code class="prism language-javascript"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 因为canvas是基于状态绘制的，也就是设置了缩放值，再绘制的元素才会根据缩放倍数绘制，因此需要把每个绘制的对象保存起来。</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>data <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span> 
+  <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> <span class="token comment">// 默认缩放值是 1</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 添加形状</span>
+<span class="token function">push</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// push 方法中添加保存数据操作</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>data<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 渲染整个 图形画布</span>
+<span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span>width <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>width
+
+  <span class="token keyword">this</span><span class="token punctuation">.</span>data<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>item <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">draw</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>第二步骤</strong>：.因为缩放时鼠标滚轮控制，所以加上监听滚轮事件，而且是在鼠标移入画布中时才添加，不在画布中就不需要监听滚轮事件。</p>
+<pre><code class="prism language-javascript"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 添加滚轮判断事件</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">addScaleFunc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+ 
+<span class="token comment">// 添加缩放功能，判断时机注册移除MouseWhell事件</span>
+<span class="token function">addScaleFunc</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'mouseenter'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>addMouseWhell<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'mouseleave'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>removeMouseWhell<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 添加 mousewhell 事件</span>
+<span class="token function-variable function">addMouseWhell</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  document<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'mousewheel'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scrollFunc<span class="token punctuation">,</span> <span class="token punctuation">{</span>passive<span class="token punctuation">:</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 移除mousewhell 事件</span>
+<span class="token function-variable function">removeMouseWhell</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  document<span class="token punctuation">.</span><span class="token function">removeEventListener</span><span class="token punctuation">(</span><span class="token string">'mousewheel'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scrollFunc<span class="token punctuation">,</span> <span class="token punctuation">{</span>passive<span class="token punctuation">:</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>第三步骤</strong>：滚轮事件监听完成后，就是调用具体的缩放实现代码了</p>
+<pre><code class="prism language-javascript"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 缩放具体实现会用到的数据</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>maxScale <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span> <span class="token comment">// 最大缩放值</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>minScale <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> <span class="token comment">// 最小缩放值</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>step <span class="token operator">=</span> <span class="token number">0.1</span><span class="token punctuation">;</span>   <span class="token comment">// 缩放率</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>  <span class="token comment">// 画布X轴偏移值</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>  <span class="token comment">// 画布Y轴偏移值</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 缩放 具体计算</span>
+<span class="token function-variable function">scrollFunc</span> <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 阻止默认事件 （缩放时外部容器禁止滚动）</span>
+  e<span class="token punctuation">.</span><span class="token function">preventDefault</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>wheelDelta<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">var</span> x <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetX <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX
+    <span class="token keyword">var</span> y <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetY <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY
+
+    <span class="token keyword">var</span> offsetX <span class="token operator">=</span> <span class="token punctuation">(</span>x <span class="token operator">/</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step
+    <span class="token keyword">var</span> offsetY <span class="token operator">=</span> <span class="token punctuation">(</span>y <span class="token operator">/</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step
+
+    <span class="token keyword">if</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>wheelDelta <span class="token operator">&gt;</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX <span class="token operator">-=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">&gt;=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>maxScale <span class="token operator">?</span> <span class="token number">0</span> <span class="token punctuation">:</span> offsetX
+      <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY <span class="token operator">-=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">&gt;=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>maxScale <span class="token operator">?</span> <span class="token number">0</span> <span class="token punctuation">:</span> offsetY
+
+      <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">+=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX <span class="token operator">+=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">&lt;=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>minScale <span class="token operator">?</span> <span class="token number">0</span> <span class="token punctuation">:</span> offsetX
+      <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY <span class="token operator">+=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">&lt;=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>minScale <span class="token operator">?</span> <span class="token number">0</span> <span class="token punctuation">:</span> offsetY
+
+      <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">-=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>maxScale<span class="token punctuation">,</span> Math<span class="token punctuation">.</span><span class="token function">max</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>minScale<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 在类型判断渲染方法内添加设置缩放</span>
+<span class="token function">draw</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span><span class="token function">setTransform</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><a href="http://jsrun.net/ZI2Kp">以上代码效果预览</a></p>
+<p>解释：<br>
+   第一步骤第二步骤理解起来很容易，比较麻烦的是第三步骤，下面就来详细解释一下第三部具体缩放实现。</p>
+<p>缩减一下代码</p>
+<pre><code class="prism language-javascript"><span class="token function-variable function">scrollFunc</span> <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 阻止默认事件 （缩放时外部容器禁止滚动）</span>
+  e<span class="token punctuation">.</span><span class="token function">preventDefault</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>wheelDelta<span class="token punctuation">)</span><span class="token punctuation">{</span>
+  
+    e<span class="token punctuation">.</span>wheelDelta <span class="token operator">&gt;</span> <span class="token number">0</span> <span class="token operator">?</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">+=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step <span class="token punctuation">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">-=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step
+    
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>只需要上述几行就实现了缩放。判断 <code>e.wheelDelta</code>  是向上滚动还是向下，从而增加或减少 <code>this.scale</code> 的大小，最后调用 <code>render()</code> 重新绘制当前画布。</p>
+<p><code>e.preventDefault()</code> 就不多解释了，大家都知道是解决默认行为的。但是有一点要解释一下 在调用 <code>scrollFunc()</code> 这个函数的事件监听器的第三个参数 <code>{passive: false}</code> 是必须加的（默认就是 <code>{passive: true}</code>），不然无法阻止默认的滚动事件。</p>
+<p>大家可以在演示例子中注释掉 <code>scrollFunc</code> 中的其它代码查看效果，发现缩放是可以了，但是，却没有根据鼠标位置进行缩放，而是始终以<code>画布(0,0)</code> 的位置缩放。所以画布放大后会向右下偏移，因此需要向左和上偏移校正，使缩放看起来就像在鼠标位置缩放。</p>
+<p>在上方代码上改造一下 代码如下：</p>
+<pre><code class="prism language-javascript"><span class="token function-variable function">scrollFunc</span> <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 阻止默认事件 （缩放时外部容器禁止滚动）</span>
+  e<span class="token punctuation">.</span><span class="token function">preventDefault</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>wheelDelta<span class="token punctuation">)</span><span class="token punctuation">{</span>
+  
+    <span class="token keyword">var</span> x <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetX <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX
+    <span class="token keyword">var</span> y <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetY <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY
+
+    <span class="token keyword">var</span> offsetX <span class="token operator">=</span> <span class="token punctuation">(</span>x <span class="token operator">/</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step
+    <span class="token keyword">var</span> offsetY <span class="token operator">=</span> <span class="token punctuation">(</span>y <span class="token operator">/</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step
+
+    <span class="token keyword">if</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>wheelDelta <span class="token operator">&gt;</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX <span class="token operator">-=</span> offsetX
+      <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY <span class="token operator">-=</span> offsetY
+
+      <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">+=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX <span class="token operator">+=</span> offsetX
+      <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY <span class="token operator">+=</span> offsetY
+
+      <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">-=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step
+    <span class="token punctuation">}</span>
+    
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><code>x，y</code> 是鼠标距离画布原始原点的距离，<code>offsetX，offsetY</code> 是本次缩放的偏移量，然后判断放大或者缩小从而增减整体画布的偏移量。</p>
+<p>本次偏移量计算方式：鼠标距原始点距离<code>(x，y)</code> 除以 缩放值 <code>this.scale</code> 再乘以 缩放率 <code>this.step</code>。<br>
+<strong>  <font size="2">解释：因为是使用<code>setTransform()</code>，所以每次放大或者缩小都是在原始画布大小的基础上缩放，所以需要除以缩放值，找到在原始缩放基础上鼠标距离原始点的距离。</font></strong><br>
+<strong>  <font size="2">解释：如果使用<code>scale()</code>，就不需要除以缩放值，直接当前缩放值乘以缩放率就能等于现在实际缩放值</font></strong></p>
+<p>最后再把缩放功能完善，添加最大缩放值<code>this.maxScale</code> 和 最小缩放值 <code>this.minScale</code> 限制，完成代码如下：</p>
+<pre><code class="prism language-javascript"><span class="token comment">// 缩放 具体计算</span>
+<span class="token function-variable function">scrollFunc</span> <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 阻止默认事件 （缩放时外部容器禁止滚动）</span>
+  e<span class="token punctuation">.</span><span class="token function">preventDefault</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>wheelDelta<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">var</span> x <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetX <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX
+    <span class="token keyword">var</span> y <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetY <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY
+
+    <span class="token keyword">var</span> offsetX <span class="token operator">=</span> <span class="token punctuation">(</span>x <span class="token operator">/</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step
+    <span class="token keyword">var</span> offsetY <span class="token operator">=</span> <span class="token punctuation">(</span>y <span class="token operator">/</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step
+
+    <span class="token keyword">if</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>wheelDelta <span class="token operator">&gt;</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX <span class="token operator">-=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">&gt;=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>maxScale <span class="token operator">?</span> <span class="token number">0</span> <span class="token punctuation">:</span> offsetX
+      <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY <span class="token operator">-=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">&gt;=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>maxScale <span class="token operator">?</span> <span class="token number">0</span> <span class="token punctuation">:</span> offsetY
+
+      <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">+=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX <span class="token operator">+=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">&lt;=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>minScale <span class="token operator">?</span> <span class="token number">0</span> <span class="token punctuation">:</span> offsetX
+      <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY <span class="token operator">+=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">&lt;=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>minScale <span class="token operator">?</span> <span class="token number">0</span> <span class="token punctuation">:</span> offsetY
+
+      <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">-=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>step
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">this</span><span class="token punctuation">.</span>scale <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>maxScale<span class="token punctuation">,</span> Math<span class="token punctuation">.</span><span class="token function">max</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>minScale<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>以上缩放值计算就完成了，最后只需调用 <code>this.render()</code>，在<code>this.render</code> 中会调用 <code>this.draw</code> 函数，这个函数里调用<code>setTransform</code> 方法，这里会将更改后的缩放值，以及偏移值设置到画布中。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span><span class="token function">setTransform</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<br>
+<h2><a id="_397"></a>添加拖拽画布的效果</h2>
+<p>首先理清一下拖拽的步骤<br>
+鼠标按下 =&gt; 鼠标移动 =&gt; 鼠标放开</p>
+<p>鼠标按下：我们用 <code>mousedown</code> 事件，然后在按下事件中注册 <strong>鼠标移动</strong> 事件<br>
+鼠标移动：我们用 <code>mousemove</code> 事件，在鼠标移动事件中 <strong>具体实现画布移动</strong><br>
+鼠标放开：我们用 <code>mouseup</code> 事件，在鼠标放开事件中 删除 <strong>鼠标移动</strong> 事件</p>
+<p>具体代码如下：</p>
+<pre><code class="prism language-javascript"><span class="token function">constructor</span><span class="token punctuation">(</span>params<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>wrapDom <span class="token operator">=</span> params<span class="token punctuation">.</span>el<span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">addDragFunc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 添加拖拽功能，判断时机注册移除 拖拽 功能</span>
+<span class="token function">addDragFunc</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'mousedown'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>addMouseMove<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  document<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'mouseup'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>removeMouseMove<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 添加鼠标移动 功能，获取保存当前点击坐标</span>
+<span class="token function-variable function">addMouseMove</span> <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>targetX <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetX
+  <span class="token keyword">this</span><span class="token punctuation">.</span>targetY <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetY
+
+  <span class="token keyword">this</span><span class="token punctuation">.</span>mousedownOriginX <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX<span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>mousedownOriginY <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY<span class="token punctuation">;</span>
+  
+  <span class="token keyword">this</span><span class="token punctuation">.</span>wrapDom<span class="token punctuation">.</span>style<span class="token punctuation">.</span>cursor <span class="token operator">=</span> <span class="token string">'grabbing'</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'mousemove'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>moveCanvasFunc<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token comment">// 移除鼠标移动事件</span>
+<span class="token function-variable function">removeMouseMove</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>wrapDom<span class="token punctuation">.</span>style<span class="token punctuation">.</span>cursor <span class="token operator">=</span> <span class="token string">''</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span><span class="token function">removeEventListener</span><span class="token punctuation">(</span><span class="token string">'mousemove'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>moveCanvasFunc<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span><span class="token function">removeEventListener</span><span class="token punctuation">(</span><span class="token string">'mousemove'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>moveShapeFunc<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 移动画布</span>
+<span class="token function-variable function">moveCanvasFunc</span> <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 获取 最大可移动宽</span>
+  <span class="token keyword">var</span> maxMoveX <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span>width <span class="token operator">/</span> <span class="token number">2</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> maxMoveY <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span>height <span class="token operator">/</span> <span class="token number">2</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">var</span> offsetX <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>mousedownOriginX <span class="token operator">+</span> <span class="token punctuation">(</span>e<span class="token punctuation">.</span>offsetX <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>targetX<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> offsetY <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>mousedownOriginY <span class="token operator">+</span> <span class="token punctuation">(</span>e<span class="token punctuation">.</span>offsetY <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>targetY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">abs</span><span class="token punctuation">(</span>offsetX<span class="token punctuation">)</span> <span class="token operator">&gt;</span> maxMoveX <span class="token operator">?</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX <span class="token punctuation">:</span> offsetX
+  <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">abs</span><span class="token punctuation">(</span>offsetY<span class="token punctuation">)</span> <span class="token operator">&gt;</span> maxMoveY <span class="token operator">?</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY <span class="token punctuation">:</span> offsetY
+  
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+</code></pre>
+<p><a href="http://jsrun.net/dI2Kp">以上代码效果演示</a></p>
+<p>其它代码都很简单，这里就详细解释一下 <code>addMouseMove()</code> 和 <code>moveCanvasFunc()</code> 做了哪些操作。</p>
+<p><code>addMouseMove</code> 函数中 使用 <code>targetX，targetY</code> 保存了鼠标点击时的坐标，<code>mousedownOriginX ，mousedownOriginX</code> 保存了鼠标点击时 画布的整体偏移量。</p>
+<p>再在 <code>moveCanvasFunc</code> 函数中 计算出移动后的整体偏移量，<code>moveCanvasFunc</code> 函数中的代码可以简化成这样：</p>
+<pre><code class="prism language-javascript"><span class="token function-variable function">moveCanvasFunc</span> <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> offsetX <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>mousedownOriginX <span class="token operator">+</span> <span class="token punctuation">(</span>e<span class="token punctuation">.</span>offsetX <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>targetX<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> offsetY <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>mousedownOriginY <span class="token operator">+</span> <span class="token punctuation">(</span>e<span class="token punctuation">.</span>offsetY <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>targetY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>其他代码是为了限制偏移量的最大值，最后调用<code>this.render()</code></p>
+<p>整体来讲，拖拽画布功能比缩放稍微简单一些，同样这里最后会调用 <code>this.render()</code>，在<code>this.render</code> 中会调用 <code>this.draw</code> 函数，这个函数里调用了<code>setTransform</code> 方法，这里会将更改后的缩放值，以及偏移值设置到画布中。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span>ctx<span class="token punctuation">.</span><span class="token function">setTransform</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h2><a id="_477"></a>拖拽画布中的形状</h2>
+<p>如果要拖拽画布中的形状，需要判断鼠标点击的位置是否处于形状中，而且因为层级关系，只能控制顶层的形状。</p>
+<p>因此需要写鼠标按下时是否处于形状内部的判断方法，这里我们只写了矩形、原型、线段的判断方法。</p>
+<p>因为之前已经在实现画布拖拽的时候，实现了拖拽功能，现在只需要要改造 <code>addMouseMove</code> 函数 和添加 <strong>形状移动</strong> 函数，以及三个判断方法。</p>
+<p>整体代码如下：</p>
+<pre><code class="prism language-javascript"><span class="token comment">// 添加鼠标移动 功能，获取保存当前点击坐标</span>
+<span class="token function-variable function">addMouseMove</span> <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+
+  <span class="token keyword">this</span><span class="token punctuation">.</span>targetX <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetX
+  <span class="token keyword">this</span><span class="token punctuation">.</span>targetY <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetY
+
+  <span class="token keyword">this</span><span class="token punctuation">.</span>mousedownOriginX <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX<span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>mousedownOriginY <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY<span class="token punctuation">;</span>
+
+  <span class="token keyword">var</span> x <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>targetX <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">;</span>
+  <span class="token keyword">var</span> y <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>targetY <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">;</span>
+
+  <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape <span class="token operator">=</span> <span class="token keyword">null</span>
+
+  <span class="token keyword">this</span><span class="token punctuation">.</span>data<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>item <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>type<span class="token punctuation">)</span><span class="token punctuation">{</span>
+      <span class="token keyword">case</span> <span class="token string">'rect'</span><span class="token punctuation">:</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">isInnerRect</span><span class="token punctuation">(</span><span class="token operator">...</span>item<span class="token punctuation">.</span>data<span class="token punctuation">,</span> x<span class="token punctuation">,</span> y<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>activeShape <span class="token operator">=</span> item<span class="token punctuation">)</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span>
+      <span class="token keyword">case</span> <span class="token string">'circle'</span><span class="token punctuation">:</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">isInnerCircle</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>x<span class="token punctuation">,</span> item<span class="token punctuation">.</span>y<span class="token punctuation">,</span> item<span class="token punctuation">.</span>r<span class="token punctuation">,</span> x<span class="token punctuation">,</span> y<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>activeShape <span class="token operator">=</span> item<span class="token punctuation">)</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span>
+      <span class="token keyword">case</span> <span class="token string">'line'</span><span class="token punctuation">:</span>
+        <span class="token keyword">var</span> lineNumber <span class="token operator">=</span> item<span class="token punctuation">.</span>data<span class="token punctuation">.</span>length <span class="token operator">/</span> <span class="token number">2</span> <span class="token operator">-</span> <span class="token number">1</span>
+        <span class="token keyword">var</span> flag <span class="token operator">=</span> <span class="token boolean">false</span>
+        <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> lineNumber<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+          <span class="token keyword">let</span> index <span class="token operator">=</span> i<span class="token operator">*</span><span class="token number">2</span><span class="token punctuation">;</span>
+          flag <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">isInnerPath</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>data<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">,</span> item<span class="token punctuation">.</span>data<span class="token punctuation">[</span>index<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> item<span class="token punctuation">.</span>data<span class="token punctuation">[</span>index<span class="token operator">+</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> item<span class="token punctuation">.</span>data<span class="token punctuation">[</span>index<span class="token operator">+</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">,</span> x<span class="token punctuation">,</span> y<span class="token punctuation">,</span> item<span class="token punctuation">.</span>lineWidth <span class="token operator">||</span> <span class="token number">1</span><span class="token punctuation">)</span>
+          <span class="token keyword">if</span><span class="token punctuation">(</span>flag<span class="token punctuation">)</span><span class="token punctuation">{</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape <span class="token operator">=</span> item
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+          <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+  <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>wrapDom<span class="token punctuation">.</span>style<span class="token punctuation">.</span>cursor <span class="token operator">=</span> <span class="token string">'grabbing'</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'mousemove'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>moveCanvasFunc<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>wrapDom<span class="token punctuation">.</span>style<span class="token punctuation">.</span>cursor <span class="token operator">=</span> <span class="token string">'all-scroll'</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>shapedOldX <span class="token operator">=</span> <span class="token keyword">null</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>shapedOldY <span class="token operator">=</span> <span class="token keyword">null</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'mousemove'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>moveShapeFunc<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 移动形状</span>
+<span class="token function-variable function">moveShapeFunc</span> <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> moveX <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetX <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>shapedOldX <span class="token operator">||</span> <span class="token keyword">this</span><span class="token punctuation">.</span>targetX<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> moveY <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetY <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>shapedOldY <span class="token operator">||</span> <span class="token keyword">this</span><span class="token punctuation">.</span>targetY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  
+  moveX <span class="token operator">/=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale
+  moveY <span class="token operator">/=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale
+
+  <span class="token keyword">switch</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>type<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'rect'</span><span class="token punctuation">:</span>
+      <span class="token keyword">let</span> x <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>data<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+      <span class="token keyword">let</span> y <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>data<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+      <span class="token keyword">let</span> width <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>data<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>
+      <span class="token keyword">let</span> height <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>data<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>data <span class="token operator">=</span> <span class="token punctuation">[</span>x <span class="token operator">+</span> moveX<span class="token punctuation">,</span> y <span class="token operator">+</span> moveY<span class="token punctuation">,</span> width<span class="token punctuation">,</span> height<span class="token punctuation">]</span>
+      <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token string">'circle'</span><span class="token punctuation">:</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>x <span class="token operator">+=</span> moveX
+      <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>y <span class="token operator">+=</span> moveY
+      <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token string">'line'</span><span class="token punctuation">:</span>
+      <span class="token keyword">var</span> item <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">;</span>
+      <span class="token keyword">var</span> lineNumber <span class="token operator">=</span> item<span class="token punctuation">.</span>data<span class="token punctuation">.</span>length <span class="token operator">/</span> <span class="token number">2</span>
+      <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> lineNumber<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token keyword">let</span> index <span class="token operator">=</span> i<span class="token operator">*</span><span class="token number">2</span><span class="token punctuation">;</span>
+        item<span class="token punctuation">.</span>data<span class="token punctuation">[</span>index<span class="token punctuation">]</span> <span class="token operator">+=</span> moveX
+        item<span class="token punctuation">.</span>data<span class="token punctuation">[</span>index <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+=</span> moveY
+      <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>shapedOldX <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetX
+  <span class="token keyword">this</span><span class="token punctuation">.</span>shapedOldY <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetY
+
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 判断是否在矩形框内</span>
+<span class="token function">isInnerRect</span><span class="token punctuation">(</span>x0<span class="token punctuation">,</span> y0<span class="token punctuation">,</span> width<span class="token punctuation">,</span> height<span class="token punctuation">,</span> x<span class="token punctuation">,</span> y<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> x0 <span class="token operator">&lt;=</span> x <span class="token operator">&amp;&amp;</span> y0 <span class="token operator">&lt;=</span> y <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>x0 <span class="token operator">+</span> width<span class="token punctuation">)</span> <span class="token operator">&gt;=</span> x <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>y0 <span class="token operator">+</span> height<span class="token punctuation">)</span> <span class="token operator">&gt;=</span> y
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 判断是否在圆形内</span>
+<span class="token function">isInnerCircle</span><span class="token punctuation">(</span>x0<span class="token punctuation">,</span> y0<span class="token punctuation">,</span> r<span class="token punctuation">,</span> x<span class="token punctuation">,</span> y<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> Math<span class="token punctuation">.</span><span class="token function">pow</span><span class="token punctuation">(</span>x0 <span class="token operator">-</span> x<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span> <span class="token operator">+</span> Math<span class="token punctuation">.</span><span class="token function">pow</span><span class="token punctuation">(</span>y0 <span class="token operator">-</span> y<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span> <span class="token operator">&lt;=</span> Math<span class="token punctuation">.</span><span class="token function">pow</span><span class="token punctuation">(</span>r<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 判断是否在路径上</span>
+<span class="token function">isInnerPath</span><span class="token punctuation">(</span>x0<span class="token punctuation">,</span> y0<span class="token punctuation">,</span> x1<span class="token punctuation">,</span> y1<span class="token punctuation">,</span> x<span class="token punctuation">,</span> y<span class="token punctuation">,</span> lineWidth<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> a1pow <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">pow</span><span class="token punctuation">(</span>x0 <span class="token operator">-</span> x<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span> <span class="token operator">+</span> Math<span class="token punctuation">.</span><span class="token function">pow</span><span class="token punctuation">(</span>y0 <span class="token operator">-</span> y<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> a1 <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">sqrt</span><span class="token punctuation">(</span>a1pow<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+  <span class="token keyword">var</span> a2pow <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">pow</span><span class="token punctuation">(</span>x1 <span class="token operator">-</span> x<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span> <span class="token operator">+</span> Math<span class="token punctuation">.</span><span class="token function">pow</span><span class="token punctuation">(</span>y1 <span class="token operator">-</span> y<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+  <span class="token keyword">var</span> a2 <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">sqrt</span><span class="token punctuation">(</span>a2pow<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+
+  <span class="token keyword">var</span> a3pow <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">pow</span><span class="token punctuation">(</span>x1 <span class="token operator">-</span> x0<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span> <span class="token operator">+</span> Math<span class="token punctuation">.</span><span class="token function">pow</span><span class="token punctuation">(</span>y1 <span class="token operator">-</span> y0<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+  <span class="token keyword">var</span> a3 <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">sqrt</span><span class="token punctuation">(</span>a3pow<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+
+  <span class="token keyword">var</span> r <span class="token operator">=</span> lineWidth <span class="token operator">/</span> <span class="token number">2</span>
+  <span class="token keyword">var</span> ab <span class="token operator">=</span> <span class="token punctuation">(</span>a1pow <span class="token operator">-</span> a2pow <span class="token operator">+</span> a3pow<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span><span class="token number">2</span> <span class="token operator">*</span> a3<span class="token punctuation">)</span><span class="token keyword">var</span> ab <span class="token operator">=</span> <span class="token punctuation">(</span>a1pow <span class="token operator">-</span> a2pow <span class="token operator">+</span> a3pow<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span><span class="token number">2</span> <span class="token operator">*</span> a3<span class="token punctuation">)</span>
+  <span class="token keyword">var</span> h <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">sqrt</span><span class="token punctuation">(</span>a1pow <span class="token operator">-</span> Math<span class="token punctuation">.</span><span class="token function">pow</span><span class="token punctuation">(</span>ab<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+
+  <span class="token keyword">var</span> ad <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">sqrt</span><span class="token punctuation">(</span>Math<span class="token punctuation">.</span><span class="token function">pow</span><span class="token punctuation">(</span>a3<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span> <span class="token operator">+</span> Math<span class="token punctuation">.</span><span class="token function">pow</span><span class="token punctuation">(</span>r<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+  <span class="token keyword">return</span> h <span class="token operator">&lt;=</span> r <span class="token operator">&amp;&amp;</span> a1 <span class="token operator">&lt;=</span> ad <span class="token operator">&amp;&amp;</span> a2 <span class="token operator">&lt;=</span> ad
+<span class="token punctuation">}</span>
+</code></pre>
+<p><a href="http://jsrun.net/GI2Kp">以上代码效果演示</a></p>
+<p>以上代码在 <code>addMouseMove</code> 中加入了判断是否处于形状内部的操作。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> x <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>targetX <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetX<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">;</span>
+<span class="token keyword">var</span> y <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>targetY <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>offsetY<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale<span class="token punctuation">;</span>
+
+<span class="token keyword">this</span><span class="token punctuation">.</span>activeShape <span class="token operator">=</span> <span class="token keyword">null</span>
+
+<span class="token keyword">this</span><span class="token punctuation">.</span>data<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>item <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token keyword">switch</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>type<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'rect'</span><span class="token punctuation">:</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">isInnerRect</span><span class="token punctuation">(</span><span class="token operator">...</span>item<span class="token punctuation">.</span>data<span class="token punctuation">,</span> x<span class="token punctuation">,</span> y<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>activeShape <span class="token operator">=</span> item<span class="token punctuation">)</span>
+      <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token string">'circle'</span><span class="token punctuation">:</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">isInnerCircle</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>x<span class="token punctuation">,</span> item<span class="token punctuation">.</span>y<span class="token punctuation">,</span> item<span class="token punctuation">.</span>r<span class="token punctuation">,</span> x<span class="token punctuation">,</span> y<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>activeShape <span class="token operator">=</span> item<span class="token punctuation">)</span>
+      <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token string">'line'</span><span class="token punctuation">:</span>
+      <span class="token keyword">var</span> lineNumber <span class="token operator">=</span> item<span class="token punctuation">.</span>data<span class="token punctuation">.</span>length <span class="token operator">/</span> <span class="token number">2</span> <span class="token operator">-</span> <span class="token number">1</span>
+      <span class="token keyword">var</span> flag <span class="token operator">=</span> <span class="token boolean">false</span>
+      <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> lineNumber<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token keyword">let</span> index <span class="token operator">=</span> i<span class="token operator">*</span><span class="token number">2</span><span class="token punctuation">;</span>
+        flag <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">isInnerPath</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>data<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">,</span> item<span class="token punctuation">.</span>data<span class="token punctuation">[</span>index<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> item<span class="token punctuation">.</span>data<span class="token punctuation">[</span>index<span class="token operator">+</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> item<span class="token punctuation">.</span>data<span class="token punctuation">[</span>index<span class="token operator">+</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">,</span> x<span class="token punctuation">,</span> y<span class="token punctuation">,</span> item<span class="token punctuation">.</span>lineWidth <span class="token operator">||</span> <span class="token number">1</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span><span class="token punctuation">(</span>flag<span class="token punctuation">)</span><span class="token punctuation">{</span>
+          <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape <span class="token operator">=</span> item
+          <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<p>根据鼠标位置获取到基于原始缩放状态下距离画布原点的<code>x，y</code> 坐标，根据不同 <code>type</code> 调用不同方法判断是否处于当前形状中。</p>
+<p>然后根据是否处于形状内部判断注册 <strong>拖拽画布</strong> 还是 <strong>拖拽形状</strong> 的事件</p>
+<pre><code class="prism language-javascript"><span class="token keyword">if</span><span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">)</span><span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>wrapDom<span class="token punctuation">.</span>style<span class="token punctuation">.</span>cursor <span class="token operator">=</span> <span class="token string">'grabbing'</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'mousemove'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>moveCanvasFunc<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>wrapDom<span class="token punctuation">.</span>style<span class="token punctuation">.</span>cursor <span class="token operator">=</span> <span class="token string">'all-scroll'</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>shapedOldX <span class="token operator">=</span> <span class="token keyword">null</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>shapedOldY <span class="token operator">=</span> <span class="token keyword">null</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>El<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'mousemove'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>moveShapeFunc<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>如果处于形状内部，就修改形状位置参数，并调用 <code>this.render()</code>，重新渲染画布</p>
+<pre><code class="prism language-javascript"><span class="token comment">// 移动形状</span>
+<span class="token function-variable function">moveShapeFunc</span> <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> moveX <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetX <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>shapedOldX <span class="token operator">||</span> <span class="token keyword">this</span><span class="token punctuation">.</span>targetX<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> moveY <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetY <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>shapedOldY <span class="token operator">||</span> <span class="token keyword">this</span><span class="token punctuation">.</span>targetY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  
+  moveX <span class="token operator">/=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale
+  moveY <span class="token operator">/=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>scale
+
+  <span class="token keyword">switch</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>type<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'rect'</span><span class="token punctuation">:</span>
+      <span class="token keyword">let</span> x <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>data<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+      <span class="token keyword">let</span> y <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>data<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+      <span class="token keyword">let</span> width <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>data<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>
+      <span class="token keyword">let</span> height <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>data<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>data <span class="token operator">=</span> <span class="token punctuation">[</span>x <span class="token operator">+</span> moveX<span class="token punctuation">,</span> y <span class="token operator">+</span> moveY<span class="token punctuation">,</span> width<span class="token punctuation">,</span> height<span class="token punctuation">]</span>
+      <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token string">'circle'</span><span class="token punctuation">:</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>x <span class="token operator">+=</span> moveX
+      <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">.</span>y <span class="token operator">+=</span> moveY
+      <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token string">'line'</span><span class="token punctuation">:</span>
+      <span class="token keyword">var</span> item <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>activeShape<span class="token punctuation">;</span>
+      <span class="token keyword">var</span> lineNumber <span class="token operator">=</span> item<span class="token punctuation">.</span>data<span class="token punctuation">.</span>length <span class="token operator">/</span> <span class="token number">2</span>
+      <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> lineNumber<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token keyword">let</span> index <span class="token operator">=</span> i<span class="token operator">*</span><span class="token number">2</span><span class="token punctuation">;</span>
+        item<span class="token punctuation">.</span>data<span class="token punctuation">[</span>index<span class="token punctuation">]</span> <span class="token operator">+=</span> moveX
+        item<span class="token punctuation">.</span>data<span class="token punctuation">[</span>index <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+=</span> moveY
+      <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>shapedOldX <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetX
+  <span class="token keyword">this</span><span class="token punctuation">.</span>shapedOldY <span class="token operator">=</span> e<span class="token punctuation">.</span>offsetY
+
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>移动形状同样也是要获取到基于原始缩放大小(可以看到上方除了<code>this.scale</code>)的画布的移动量 <code>moveX，moveY</code>，再将移动量增加至 选中形状的位置坐标中。</p>
+<p>保存好当前偏移量 <code>this.shapedOldX，this.shapedOldY</code>，供下次事件触发使用。</p>
+<h3><a id="_687"></a>判断是否处于形状内部方法解释</h3>
+<p>1.判断是否处于矩形框内<br>
+根据当前计算出的 <code>x，y</code> 坐标，判断是否小于 矩形的<code>x，y</code> 坐标，并且判断是否大于矩形 <code>(x + width)</code> 与 <code>(y + height)</code> 的右下角坐标。</p>
+<p>2.判断是否处于圆形内<br>
+根据当前计算出的 <code>x，y</code> 坐标，计算出距离圆心 坐标的距离，如果小于等于圆的半径，就说明处于圆形内部。</p>
+<p>3.判断是否处于线段中<br>
+假设线段 AB，鼠标点击点为C，判断AC 或 BC 是否大于 AD，如果大于C肯定不处于线段内，并且C与AB 的垂直距离CH必须小于等于 线段宽度的一半。</p>
+<p><img src="https://img-blog.csdnimg.cn/20200512125433888.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<p>这里只支持单个线段判断，多个连接线段判断不精确，连接处会有多余部分无法判断。<br>
+如下图：<br>
+<img src="https://img-blog.csdnimg.cn/20200512121911288.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+这是宽度为90的线段，红色区域上述方法能判断，箭头指向部分无法判断。<br>
+这里暂时不考虑也是因为如果 线段之间的夹角小于 <code>90deg</code>，默认形状会是：<br>
+<img src="https://img-blog.csdnimg.cn/20200512125001703.png" alt="在这里插入图片描述"><br>
+可以看 <a href="https://www.w3school.com.cn/tags/canvas_miterlimit.asp">miterLimit 属性</a> 和 <a href="https://www.w3school.com.cn/tags/canvas_linejoin.asp">lineJoin 属性</a> 以及 <a href="https://www.w3school.com.cn/tags/canvas_linecap.asp">lineCap 属性</a>，这些属性对线段影响较大，这里只做默认状态下单条线段判断演示。</p>
+<h1><a id="_707"></a>总结</h1>
+<p>OK，以上就已经把最开始讲的需求做完了，有兴趣的朋友可以更改Demo 中的例子修改参数看看效果。</p>
+<p>以上如有问题或疏漏，欢迎指正，谢谢。</p>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>遮罩覆盖的DOM，如果触发点击 等一系列事件</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>遮罩覆盖的DOM，如果触发点击 等一系列事件</h3><ul><li><a href="#_1">引言</a></li><li><a href="#_pointerevent_7">解释 pointer-event</a></li><li><a href="#_14">举例说明上面解释的效果</a></li><li><a href="#_29">有哪些场景可以使用到</a></li><li><a href="#_38">总结</a></li></ul></div><p></p>
+<h1><a id="_1"></a>引言</h1>
+<p>今天，调试 <code>iview</code> 这个UI组件库 <code>modal</code> 组件样式的时候，在可 <strong>拖拽</strong> 的样式上看到一个样式 <code>pointer-event</code> 。虽然自诩（吹牛）在样式上有较多的理解，但是我却不知道这个样式的具体作用（打脸了）。<br>
+审查元素后，发现这是我多年来心心念念的一个效果 <strong>ヾ(◍°∇°◍)ﾉﾞ</strong> ，曾经想过能否用 javascript 实现的效果（当时失败了，没找到如何实现）。现在用一个样式就能完美解决，看来当时查找问题的能力还是太差了。</p>
+<p>那接下来就看看，我心心念念那么久的功能是什么。</p>
+<h1><a id="_pointerevent_7"></a>解释 pointer-event</h1>
+<p><code>pointer-events</code> CSS 属性指定在什么情况下 (如果有) 某个特定的图形元素可以成为鼠标事件的 <code>target</code>。</p>
+<p>除了指示该元素不是鼠标事件的目标之外，值为 <code>none</code> 表示鼠标事件 <strong>穿透</strong> 该元素并且指定该元素 <strong>下面</strong> 的任何东西。</p>
+<p>（这两句话复制于 <a href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/pointer-events"><strong>这里</strong></a>，可以点进去看更多解释，当然想听我唠嗑，可以接着往下看）</p>
+<h1><a id="_14"></a>举例说明上面解释的效果</h1>
+<p><img src="https://img-blog.csdnimg.cn/20200623172115963.gif" alt="演示效果的图"><br>
+上图展示了被两个粉色 遮罩 <code>DOM</code>  覆盖住的一个在 <code>hover</code> 时添加了效果的 <code>DOM</code> 框，并且里面有两个按钮，右侧的遮罩内有两个子 <code>DOM</code>。</p>
+<p>左侧的粉色遮罩 ，样式是默认的，也就是 <code>pointer-event</code> 默认是 <code>auto</code>，它覆盖了 下面的方框，当移鼠标移到方框上方的 粉色 区域时，方框 <code>hover</code> 的效果没有显示，因为粉色遮罩盖住了方框。仔细看鼠标的样式以及方框的样式就明白了。</p>
+<p>右侧的粉色遮罩，设置了 <code>pointer-event: none;</code> ，鼠标移动到覆盖住方框的粉色区域，鼠标样式与方框样式变化都触发了。仔细查看移动到 <code>button</code> 按钮上时也一样。</p>
+<p>最右边两个 橙色 框，都是右侧粉色遮罩的 子元素，因为 <code>pointer-event</code> 属性会继承，所以移上去只有下面重置回 <code>pointer-event: auto;</code> 的橙色框的鼠标样式不一样。</p>
+<p><a href="http://jsrun.net/jNvKp">上面的效果图演示例子</a></p>
+<p>设置了 <code>pointer-event: none;</code>  的 <code>DOM</code> ,在控制台审查元素时默认也无法选中，需要在文档中找到这个<code>DOM</code> 选中，效果如下：<img src="https://img-blog.csdnimg.cn/2020062317361569.gif" alt="在这里插入图片描述"><br>
+左侧的粉色遮罩能选中，右侧粉色框无法选中，右侧上方的橙色框无法选中，下方的橙色框可以选中。</p>
+<h1><a id="_29"></a>有哪些场景可以使用到</h1>
+<p>1.如果你的网页上使用了<code>img</code> 标签，但是不想让用户拖动，想让它像背景图一样，就可以给这种图片加上 <code>pointer-event: none;</code> ，这样图片就会忽略鼠标的事件了，直接<strong>穿透</strong> 图片，使事件直接作用于图片下方的元素。</p>
+<p>2.如果我们想使页面某一块儿拥有遮罩，但是我们这一块儿元素的事件却不能屏蔽掉。之前我们可能使用 <code>opacity: .5</code> 使元素半透明的方式曲线救国，如果要其他颜色遮罩，就是在这个半透明元素父级添加一个背景色。 现在知道了 <code>pointer-event</code> 这个样式，就不用这么麻烦，直接覆盖要遮挡的元素，设置好 <code>pointer-event: none;</code> 这样顶层这个遮挡只保留了样式，不会阻止鼠标触发遮罩下方 <code>DOM</code> 的事件。</p>
+<p>3.曾今想通过父级代理的方式，代理子元素的事件。比如有一排按钮，只需要在这一排按钮的父级添加 <code>click</code> 事件， 再通过 事件默认传进来的 <code>event</code> 事件对象，取出 <code>target</code>，再通过判断 <code>target</code> 的属性，知道点击的是哪一个按钮。这样做有一个小小的bug，就是如果这个按钮上有图标，而恰好点在图标上，<code>target</code> 指向的就不是 按钮本身的<code>DOM</code> 了，而是图标。这里也只需要把 图标的<code>DOM</code> 设置 <code>pointer-event: none;</code> 这样图标的元素就不会成为 <code>target</code> 的指向了。</p>
+<p>还有很多。。。。</p>
+<h1><a id="_38"></a>总结</h1>
+<p><code>pointer-event</code> 的样式看起来很简单，却能给我们带来很不错的效果。<br>
+这里也只分享了 <code>none</code> 这个值带来的效果，有兴趣的童鞋可以进这里面看看 <a href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/pointer-events">css pointer-event</a>，以及 <a href="https://developer.mozilla.org/zh-CN/docs/Web/SVG/Attribute/pointer-events">SVG pointer-event </a></p>
+<p>在样式的世界里，每种样式互相搭配，有时候你就会发现你以前没发现的新天地。</p>
+</div>
+</body>
+
+</html>

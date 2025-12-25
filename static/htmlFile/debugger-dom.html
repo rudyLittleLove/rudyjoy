@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>开发小技巧之调试DOM</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>开发小技巧之调试移开消失的元素</h3><ul><li><a href="#_1">引言</a></li><li><a href="#_3">伪类</a></li><li><a href="#className_15">增删className</a></li><li><a href="#DOM_19">增删DOM</a></li><li><a href="#_30">总结</a></li></ul></div><p></p>
+<h1><a id="_1"></a>引言</h1>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;大多数小伙伴都遇到过一种调试情况，想调试页面中的某个元素，查看该元素的样式或者其他信息。鼠标移上去的时候或者点击的时候存在，移开就消失了，以至于不能用选择页面元素工具查看。今天就来整理一下什么功能会出现这种情况，以及该如何调试这种情况的元素。</p>
+<h1><a id="_3"></a>伪类</h1>
+<p>最常见的也是最普通的情况就是伪类，其中<code>:hover</code> , <code>:focus</code>是最常见的，很多菜单就是通过这两种伪类做的下拉悬浮，最不易察觉的样式是<code>:focus</code> 伪类选择器中的样式。<br>
+比如<code>chrome</code>中元素获取焦点的样式<br>
+<img src="https://img-blog.csdnimg.cn/20200220165051773.gif" alt="在这里插入图片描述">仔细看的话会发现，<code>input</code>输入框在获取焦点时有个默认的<code>outline</code> 外边轮廓，而图片中选择的<code>div.content</code>在勾选上<code>focus</code>伪类选择时也出现了一个蓝色的<code>outline</code> 外边轮廓。<br>
+正常情况下<code>div.content</code> 是无法获取焦点的，所以我们很少见到，但是<code>input</code> 输入框我们经常见到，有很多新手不知道这个默认的<code>outline</code>，想把这个样式修改又不知从何修改，而这里的<code>-webkit-focus-ring-color</code> 指的是<code>chrome</code> 获取焦点的颜色变量，从样式计算结果可以看到这个颜色值是<code>rgb(77, 144, 254)</code>。</p>
+<p>比如github的登录页输入框就用了<code>:focus</code> 伪类选择器设置了输入框的<code>box-shaodw:</code>的<code>spread</code>(阴影的大小)。<br>
+<img src="https://img-blog.csdnimg.cn/20200220173222312.gif" alt="在这里插入图片描述"><br>
+之前在StackOverflow 上也碰到过有人问像上面提到的样式怎么去掉，其实只要知道了这个样式是获取焦点时才出现，<strong>勾选上调试窗口的<code>:focus</code>伪类选择</strong>就能知道这个样式的具体信息了。</p>
+<p>与<code>:focus</code>伪类选择类似的<code>:hover</code>伪类选择也一样，只是触发的条件由获取焦点换成了在元素上悬浮，失去焦点消失变成了移开元素消失，调试这种情况也只需要<strong>勾选上调试窗口的<code>:hover</code>伪类选择</strong>就行。其他伪类选择也是一样，勾选对应的选择就行。<br>
+<img src="https://img-blog.csdnimg.cn/20200221095429293.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<h1><a id="className_15"></a>增删className</h1>
+<p>通过事件驱动，给DOM增删className控制样式，比如百度网盘的下拉菜单。<br>
+<img src="https://img-blog.csdnimg.cn/20200220182155569.gif" alt="在这里插入图片描述"><br>
+这里在<code>div.g-dropdown-button</code>这个DOM上增删了<code>.button-open</code> 这个className，用<code>.g-dropdown-button.button-open&gt;.menu</code>选择器控制了<code>.menu</code>这个DOM的展示与隐藏，对于这种情况还是比较容易调试的，因为这里只是控制了DOM的隐藏和显示，DOM还是一直存在与document之中的，想更改样式还是比较容易的。</p>
+<h1><a id="DOM_19"></a>增删DOM</h1>
+<p>调试DOM最麻烦的就是这种，通过事件驱动，对触发的事件创建或者删除对应的DOM，比如一个下拉菜单，移动到按钮上，触发<code>mouseenter</code>事件，然后创建了一个下拉框的DOM，移出这个下拉框，触发<code>mouseleave</code>事件，删除了这个下拉框DOM，这个时候想要调试更改这个下拉框的样式就比较麻烦，因为移开DOM就被实时删除，无法查看这个DOM的样式，更没法调试更改样式，举个例子。<br>
+<img src="https://img-blog.csdnimg.cn/20200220184019737.gif" alt="在这里插入图片描述"><br>
+由于没找到网上例子，目前只找到移入创建DOM，移出不删除的例子，待会儿下面手写一个功能再看，现在这里可以看到移入<code>button</code> 标签时，在document中<code>body</code>标签内最下方创建了一个<code>tooltip</code>提示的DOM，这里很多新手不知道怎么查看以及更改<code>tooltip</code>提示的样式。在移出<code>button</code>未删除的情况下根据提示内容在文档中搜索一下就能找到，但是移出<code>button</code>就删除对应的DOM的情况下就需用用到<code>debugger</code>(断点)调试的方式了，<code>debugger</code>因为可以中断js进程，所以移出<code>button</code>之前进入<code>debugger</code> 就能用调试器更改DOM的样式了。</p>
+<p>只需要在Consle下，用一个计时器<code>setTimeout(() =&gt; { debugger }, 2000)</code> 延时进入断点就好，时长根据页面操作复杂度自行决定，先执行这个计时器，再移到页面中触发事件，弹出临时创建的DOM，只需等待进入断点即可，最后再调试。</p>
+<p>下面用断点调试法尝试解决以上谈到的问题<br>
+<img src="https://img-blog.csdnimg.cn/20200220190233988.gif" alt="在这里插入图片描述"><br>
+这里就写了一个移入按钮创建提示的DOM，移出就删除。例子可以很明显的看到，移动到<code>测试按钮</code>上创建了一个<code>.test-class</code>的DOM，移出<code>测试按钮</code>就删除 <code>.test-class</code>这个DOM，因为移出就没办法调试，所以使用上诉提到的办法，用计时器延时进入断点，进入断点后可以看到，再次移出<code>测试按钮</code>，<code>.test-class</code>这个DOM不会消失，这样就可以使用样式调试工具，更改样式了。</p>
+<h1><a id="_30"></a>总结</h1>
+<p>总的来讲，页面调试只要掌握了规律，其实很容定位，不同浏览器对样式的解析有较多差异，如何在不同浏览器上写出相同呈现效果的页面，调试是必不可少的一部分，希望每一位同学都能熟练的调试DOM。</p>
+<p>以上如有疏漏或错误，欢迎指正。</p>
+</div>
+</body>
+
+</html>
