@@ -3,7 +3,7 @@
   h1 多一点点爱的小破站
   .line
   p 本站纯个人开发学习(vue3 + TypeScript + elementUI3.0 + vite 重构版)。
-  p 整体样式由站主设计。
+  p 整体样式由站主设计(其实也没啥设计^_^)。
   p 
     span 网站主要存放了一些站主发布的
     el-link( type="primary" href="http://rudyjoy.cn/blogs" ) 博客信息
