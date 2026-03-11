@@ -2,7 +2,7 @@
 .base-info
   h1 多一点点爱的小破站
   .line
-  p 本站纯个人开发学习(vue3 + TypeScript + elementUI3.0 + vite 重构版)
+  p 本站纯个人开发学习(vue3 + TypeScript + elementUI3.0 + vite 重构版)。
   p 整体样式由站主设计。
   p 
     span 网站主要存放了一些站主发布的
