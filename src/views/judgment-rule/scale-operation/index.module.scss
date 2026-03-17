@@ -1,0 +1,18 @@
+.scale-operation {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ebeef5;
+  background-color: #efefef;
+  padding: 0 12px;
+  border-radius: 4px;
+  :global {
+    .el-button {
+      margin-right: 16px;
+    }
+    .el-dropdown {
+      .el-icon {
+        margin-left: 5px;
+      }
+    }
+  }
+}

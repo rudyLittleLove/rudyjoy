@@ -1,0 +1,183 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vscode 自定义编辑器样式 css修改</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>vscode 自定义编辑器样式 CSS修改</h3><ul><li><a href="#_2">看看别人插件</a></li><ul><li><a href="#background_10">background</a></li><li><a href="#backgroundcover_43">background-cover</a></li></ul><li><a href="#_62">自己修改样式</a></li><ul><li><a href="#1vscode__settingjson_76">1.打开vscode 配置文件 setting.json</a></li><li><a href="#2_wokbenchdesktopmaincss_92">2.修改上面提到的 wokbench.desktop.main.css文件</a></li></ul><li><a href="#_191">总结</a></li></ul></div><p></p>
+<h1><a id="_2"></a>看看别人插件</h1>
+<p>首先讲一下为什么会写这个，在某年某月某天，突然觉得vscode编辑器样式‘“看腻了”，就想着改改样式，比如背景啥的。先找了一下插件，vscodel里的 background、background-cover 插件都下过，先总结一下它们更改的方法。</p>
+<p><strong><font color="red">第一次强调*要更改vscode样式，需要修改vscode的样式文件，因此需要权限，所以请使用管理员身份运行修改样式文件的软件，以及vscode，修改后会提示软件可能损坏，请点击提示框上的设置（齿轮）选择忽略。</font></strong><br>
+vscode的css文件地址：</p>
+<pre><code class="prism language-bash">C:\Program Files\Microsoft VS Code\resources\app\out\vs\workbench\workbench.desktop.main.css
+</code></pre>
+<h2><a id="background_10"></a>background</h2>
+<p>background插件改的是分栏（ split-view ）的背景，用的css伪元素:after设置背景并定位，总共用了三张图片来重复展示多个分栏背景 如下：</p>
+<pre><code class="prism language-css"><span class="token selector">[id="workbench.parts.editor"] .split-view-view:nth-child(1) .editor-container .editor-instance&gt;.monaco-editor .overflow-guard&gt;.monaco-scrollable-element::after</span><span class="token punctuation">{</span>
+	<span class="token property">background-image</span><span class="token punctuation">:</span> <span class="token url">url('')</span><span class="token punctuation">;</span>
+	<span class="token property">content</span><span class="token punctuation">:</span><span class="token string">''</span><span class="token punctuation">;</span>
+	<span class="token property">pointer-events</span><span class="token punctuation">:</span>none<span class="token punctuation">;</span>
+	<span class="token property">position</span><span class="token punctuation">:</span>absolute<span class="token punctuation">;</span>
+	<span class="token property">z-index</span><span class="token punctuation">:</span>99999<span class="token punctuation">;</span>
+	<span class="token property">width</span><span class="token punctuation">:</span>100%<span class="token punctuation">;</span>
+	<span class="token property">height</span><span class="token punctuation">:</span>100%<span class="token punctuation">;</span>
+	<span class="token property">background-position</span><span class="token punctuation">:</span>100% 100%<span class="token punctuation">;</span>
+	<span class="token property">background-repeat</span><span class="token punctuation">:</span>no-repeat<span class="token punctuation">;</span>
+	<span class="token property">opacity</span><span class="token punctuation">:</span>1<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token comment">/* 	后面两个选择器内的样式除了url内容不一样，其余与上面一样，就不格式化占篇幅了，
+	原本url内有base64格式的图片，内容较多就删掉了*/</span>
+
+<span class="token selector">[id="workbench.parts.editor"] .split-view-view:nth-child(2) .editor-container .editor-instance&gt;.monaco-editor .overflow-guard&gt;.monaco-scrollable-element::after</span><span class="token punctuation">{</span><span class="token property">background-image</span><span class="token punctuation">:</span> <span class="token url">url('')</span><span class="token punctuation">;</span><span class="token property">content</span><span class="token punctuation">:</span><span class="token string">''</span><span class="token punctuation">;</span><span class="token property">pointer-events</span><span class="token punctuation">:</span>none<span class="token punctuation">;</span><span class="token property">position</span><span class="token punctuation">:</span>absolute<span class="token punctuation">;</span><span class="token property">z-index</span><span class="token punctuation">:</span>99999<span class="token punctuation">;</span><span class="token property">width</span><span class="token punctuation">:</span>100%<span class="token punctuation">;</span><span class="token property">height</span><span class="token punctuation">:</span>100%<span class="token punctuation">;</span><span class="token property">background-position</span><span class="token punctuation">:</span>100% 100%<span class="token punctuation">;</span><span class="token property">background-repeat</span><span class="token punctuation">:</span>no-repeat<span class="token punctuation">;</span><span class="token property">opacity</span><span class="token punctuation">:</span>1<span class="token punctuation">;</span><span class="token punctuation">;</span><span class="token punctuation">}</span>
+
+<span class="token selector">[id="workbench.parts.editor"] .split-view-view:nth-child(3) .editor-container .editor-instance&gt;.monaco-editor .overflow-guard&gt;.monaco-scrollable-element::after</span><span class="token punctuation">{</span><span class="token property">background-image</span><span class="token punctuation">:</span> <span class="token url">url('')</span><span class="token punctuation">;</span><span class="token property">content</span><span class="token punctuation">:</span><span class="token string">''</span><span class="token punctuation">;</span><span class="token property">pointer-events</span><span class="token punctuation">:</span>none<span class="token punctuation">;</span><span class="token property">position</span><span class="token punctuation">:</span>absolute<span class="token punctuation">;</span><span class="token property">z-index</span><span class="token punctuation">:</span>99999<span class="token punctuation">;</span><span class="token property">width</span><span class="token punctuation">:</span>100%<span class="token punctuation">;</span><span class="token property">height</span><span class="token punctuation">:</span>100%<span class="token punctuation">;</span><span class="token property">background-position</span><span class="token punctuation">:</span>100% 100%<span class="token punctuation">;</span><span class="token property">background-repeat</span><span class="token punctuation">:</span>no-repeat<span class="token punctuation">;</span><span class="token property">opacity</span><span class="token punctuation">:</span>1<span class="token punctuation">;</span><span class="token punctuation">;</span><span class="token punctuation">}</span>
+
+<span class="token selector">[id="workbench.parts.editor"] .split-view-view .editor-container .editor-instance&gt;.monaco-editor .overflow-guard&gt;.monaco-scrollable-element&gt;.monaco-editor-background</span><span class="token punctuation">{</span>
+	<span class="token property">background</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>至于插件的设置是否启用、是否使用默认图片、自定义图片、自定义样式等有兴趣自己写插件的小伙伴可以参考此插件给的源代码在此我也贴出来：</p>
+<p><a href="https://github.com/shalldie/vscode-background">https://github.com/shalldie/vscode-background</a></p>
+<h2><a id="backgroundcover_43"></a>background-cover</h2>
+<p>而background-cover 插件，直接更改body 标签的背景色，因为有主题颜色，所以它很暴力的把body的opacity样式给改了，造成文字也会变成半透明状，视觉效果并不是很好。它的代码如下：</p>
+<pre><code class="prism language-css"><span class="token selector">body</span><span class="token punctuation">{</span>
+	<span class="token property">background-size</span><span class="token punctuation">:</span>cover<span class="token punctuation">;</span>
+	<span class="token property">background-repeat</span><span class="token punctuation">:</span> no-repeat<span class="token punctuation">;</span>
+	<span class="token property">opacity</span><span class="token punctuation">:</span>0.9500000000000001<span class="token punctuation">;</span>
+	<span class="token comment">/* 图片链接是通过插件的功能选择的电脑内的图片 */</span>
+	<span class="token property">background-image</span><span class="token punctuation">:</span><span class="token url">url('c:/Users/rudy/Pictures/77bc20a09dfc23f98236be7c5d709509.jpg')</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>这个插件的源代码我也贴出来：<br>
+<a href="https://github.com/vscode-extension/vscode-background-cover">https://github.com/vscode-extension/vscode-background-cover</a></p>
+<p>想尝试以上两个插件，直接选择vscode的 extensions，或者直接按快捷键 <kbd>ctrl</kbd> +<kbd> shift </kbd> + <kbd>x</kbd>，搜索以上两个插件名称即可。</p>
+<p><strong><font color="red">第二次提醒，想要更改vscode样式文件，需要用管理员权限运行修改样式文件的软件，以及vscode。因为编辑文件需要权限，应用样式同样需要权限，只需在修改文件后用管理员权限运行。样式展示没问题后就不需要用管理员权限运行软件了。</font></strong></p>
+<h1><a id="_62"></a>自己修改样式</h1>
+<p>说了半天别人插件如何改的样式，那么现在着手自己修改软件样式，作为前端，要修改样式肯定需要预览样式，在查找如何修改编辑器样式时了解到vscode是基于 Electron (原来叫 Atom Shell) 进行开发的。所以，界面的样式可以像浏览器一样随意修改（当然，也可能被改炸 0_0!!）。</p>
+<p>点击菜单 帮助 =&gt; 切换开发人员工具<br>
+或者按快捷键 <kbd>ctrl</kbd> + <kbd>shift</kbd> + <kbd> i </kbd> （可能存在快捷键冲突）<br>
+<img src="https://img-blog.csdnimg.cn/20191223151310128.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="vscode 开发工具"><br>
+是不是很熟悉 ٩(๑&gt;◡&lt;๑)۶，很激动？？？，有了DOM和CSS，有什么样式是你想要还做不到的呢？</p>
+<p>发一下我随便改的背景<br>
+<img src="https://img-blog.csdnimg.cn/20191223151451818.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+在完全不用把文字变透明的情况下，插入了背景图，顺便把一些层级较高，并有背景色的DOM颜色重置为透明色，背景全部使用背景图。一边码着代码，一边欣赏着动漫小姐姐(¯﹃¯)。<br>
+然而还没完，因为vscode有主题，主题可以设置各个模块的背景色，如果通过样式覆盖所有背景色会得不偿失，代价太大，<strong>最好的方式是，添加配置覆盖原主题颜色</strong></p>
+<p>修改完整流程如下</p>
+<h2><a id="1vscode__settingjson_76"></a>1.打开vscode 配置文件 setting.json</h2>
+<p>按快捷键 <kbd>ctrl</kbd> + <kbd>shift</kbd> + <kbd>p</kbd> 输入 setting 选择<br>
+<img src="https://img-blog.csdnimg.cn/20191223153722332.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="setting.json"><br>
+添加自定义颜色配置<br>
+背景色颜色值为八位，后面两位为透明度00就是完全透明，FF为完全不透明，这里不需要考虑兼容。</p>
+<pre><code class="prism language-javascript"><span class="token punctuation">{</span>
+  <span class="token comment">// 以上原本配置省略不写...</span>
+  <span class="token comment">// 以下为新添加配置</span>
+  <span class="token comment">// 背景色颜色值为八位，后面两位为透明度00就是完全透明，FF为完全不透明，这里不需要考虑兼容</span>
+  <span class="token string">"workbench.colorCustomizations"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    <span class="token string">"editor.background"</span><span class="token punctuation">:</span> <span class="token string">"#00000000"</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2><a id="2_wokbenchdesktopmaincss_92"></a>2.修改上面提到的 wokbench.desktop.main.css文件</h2>
+<pre><code>再写一遍文件路径（C:\Program Files\Microsoft VS Code\resources\app\out\vs\workbench\wokbench.desktop.main.css）
+</code></pre>
+<p>因为我的vscode是安装到C盘下，所以路径如上，请针对个人安装路径找文件，此文件是压缩后的css，不用管它，直接在最后添加新的css代码即可。最开始提到的两个插件，也是修改的此文件。<br>
+具体样式代码如下：</p>
+<pre><code class="prism language-css">	<span class="token selector">body</span><span class="token punctuation">{</span>
+		<span class="token property">background-repeat</span><span class="token punctuation">:</span> no-repeat<span class="token punctuation">;</span>
+		<span class="token property">background-image</span><span class="token punctuation">:</span><span class="token url">url('c:/Users/rudy/Pictures/vscode 自定义背景样式/blackhairgirl.png')</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+</code></pre>
+<p>就在body标签上添加了背景，当然也可以根据个人喜好在其他DOM上添加样式。</p>
+<p>最后发现添加的背景还未显示出来，此时就可以打开 帮助下的<strong>切换开发人员工具</strong>，用审查元素的方式查看哪一层DOM颜色未被重置，加上新样式覆盖就好，我找到的是在.monaco-workbench这个class上还存在背景色，就添加了如下代码：</p>
+<pre><code class="prism language-css">	<span class="token selector">body</span><span class="token punctuation">{</span>
+		<span class="token property">background-repeat</span><span class="token punctuation">:</span> no-repeat<span class="token punctuation">;</span>
+		<span class="token property">background-image</span><span class="token punctuation">:</span><span class="token url">url('c:/Users/rudy/Pictures/vscode 自定义背景样式/blackhairgirl.png')</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+	<span class="token comment">/* 新添加的覆盖背景色css样式 */</span>
+	<span class="token selector">.monaco-workbench</span><span class="token punctuation">{</span>
+		<span class="token property">background-color</span><span class="token punctuation">:</span> transparent!important<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+</code></pre>
+<p>以上就是修改样式的全部流程，因为我修改了一些看起来影响背景显示效果的样式，所以css加了一些，最后贴上我所有的修改样式，与配置。<br>
+workbench.desktop.main.css 添加的样式</p>
+<pre><code class="prism language-css">	<span class="token selector">body</span><span class="token punctuation">{</span>
+		<span class="token property">background-position</span><span class="token punctuation">:</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span> 1px<span class="token punctuation">;</span>
+		<span class="token property">background-repeat</span><span class="token punctuation">:</span> no-repeat<span class="token punctuation">;</span>
+		<span class="token property">background-image</span><span class="token punctuation">:</span><span class="token url">url('c:/Users/rudy/Pictures/vscode 自定义背景样式/blackhairgirl.png')</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+	
+	<span class="token comment">/* 软件头部背景也重置 */</span>
+	<span class="token selector">.monaco-workbench .part.editor&gt;.content .editor-group-container&gt;.title,
+	[id="workbench.parts.titlebar"],
+	.monaco-workbench</span><span class="token punctuation">{</span>
+		<span class="token property">background-color</span><span class="token punctuation">:</span> transparent!important<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token selector">.monaco-editor .scroll-decoration</span> <span class="token punctuation">{</span>
+		<span class="token property">box-shadow</span><span class="token punctuation">:</span> <span class="token function">rgba</span><span class="token punctuation">(</span>255, 255, 255, .2<span class="token punctuation">)</span> 0 6px 6px -6px inset!important<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+	
+	<span class="token comment">/* 文本编辑焦点行边框颜色修改为半透明 */</span>
+	<span class="token selector">.monaco-editor .view-overlays .current-line</span> <span class="token punctuation">{</span>
+		<span class="token property">border</span><span class="token punctuation">:</span> 2px solid <span class="token function">rgba</span><span class="token punctuation">(</span>255, 255, 255, .2<span class="token punctuation">)</span><span class="token important">!important</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token comment">/* 一打开文件列表tabs的样式 */</span>
+	<span class="token selector">.tabs-and-actions-container::before</span><span class="token punctuation">{</span>
+		<span class="token property">content</span><span class="token punctuation">:</span> <span class="token string">''</span><span class="token punctuation">;</span>
+		<span class="token property">display</span><span class="token punctuation">:</span> block<span class="token punctuation">;</span>
+		<span class="token property">border-top</span><span class="token punctuation">:</span> 1px solid <span class="token function">rgba</span><span class="token punctuation">(</span>255, 255, 255, .2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token property">width</span><span class="token punctuation">:</span> 100%<span class="token punctuation">;</span>
+		<span class="token property">z-index</span><span class="token punctuation">:</span> 1<span class="token punctuation">;</span>
+		<span class="token property">position</span><span class="token punctuation">:</span> absolute<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token comment">/* 终端与小地图样式，因为是canvas绘制的，目前只能通过更改透明度修改颜色，一个小小的遗憾。 */</span>
+	<span class="token selector">.minimap canvas,
+	.monaco-workbench .panel.integrated-terminal canvas</span> <span class="token punctuation">{</span>
+		<span class="token property">opacity</span><span class="token punctuation">:</span> 0.75<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+	
+	<span class="token selector">.monaco-workbench .part&gt;.content</span> <span class="token punctuation">{</span>
+		<span class="token property">text-shadow</span><span class="token punctuation">:</span> 0 0 1px #000000<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+	
+	<span class="token comment">/* 因为使用图片的缘故，在代码比对和分栏情况 大于1栏都设置背景色，以免背景与文字重叠不易识别 */</span>
+	<span class="token selector">[id="workbench.parts.editor"] .split-view-view + .split-view-view</span> <span class="token punctuation">{</span>
+		<span class="token property">background-color</span><span class="token punctuation">:</span> #141007!important<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+	<span class="token comment">/* 底部状态栏颜色也被我改啦 */</span>
+	<span class="token selector">[id="workbench.parts.statusbar"]</span> <span class="token punctuation">{</span>
+		<span class="token property">background-color</span><span class="token punctuation">:</span> transparent!important<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+	<span class="token comment">/* 下面是调试控制台某些样式也被我改了*/</span>
+	<span class="token selector">[data-editor-id="workbench.editors.textDiffEditor"] .editor + .editor</span> <span class="token punctuation">{</span>
+		<span class="token property">background-color</span><span class="token punctuation">:</span> #141007!important<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+	<span class="token selector">[id="workbench.panel.repl"] .monaco-list-row:hover</span> <span class="token punctuation">{</span>
+		<span class="token property">background-color</span><span class="token punctuation">:</span> #2a2d2e00!important<span class="token punctuation">;</span>
+		<span class="token property">box-shadow</span><span class="token punctuation">:</span> 0 0 3px #ffffff inset<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+</code></pre>
+<p>setting.json文件添加的配置</p>
+<pre><code class="prism language-javascript"> <span class="token punctuation">{</span> 
+	 <span class="token string">"workbench.colorCustomizations"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span>
+	    <span class="token string">"editor.background"</span><span class="token punctuation">:</span> <span class="token string">"#00000000"</span>
+	 <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h1><a id="_191"></a>总结</h1>
+<p>其实很简单，也就改了两个文件而已，一个vscode 的setting.json 配置文件，一个workbench.desktop.main.css的样式文件。</p>
+<p><strong><font color="red">最后强调，一定要用管理员权限运行软件。并且vscode更新后workbench.desktop.main.css 文件会被重置，自己改的样式最好保存好，以免更新vscode后样式消失。<font></font></font></strong></p>
+<p>用的背景图献上<img src="https://img-blog.csdnimg.cn/2019122316540079.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="vscode 自定义背景图"><br>
+<img src="https://img-blog.csdnimg.cn/20191223165435661.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="vscode 背景图片"><br>
+<img src="https://img-blog.csdnimg.cn/20191223165500266.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="vscdoe 背景图片"></p>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JavaScript 多线程处理计算密集型或高延迟的任务时，避免页面卡顿的方法</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>JavaScript 多线程处理计算密集型或高延迟的任务时，避免页面卡顿的方法</h3><ul><li><a href="#_1">引言</a></li><li><a href="#_4">单线程处理大数据演示</a></li><ul><li><a href="#_5">单线程去重代码</a></li><li><a href="#_38">动图演示</a></li></ul><li><a href="#_42">多线程处理大数据演示</a></li><ul><li><a href="#_43">多线程去重代码</a></li><li><a href="#_86">动图演示</a></li></ul><li><a href="#_89">总结</a></li></ul></div><p></p>
+<h1><a id="_1"></a>引言</h1>
+<p>  前一段时间，写了一个前端去重的博文。在处理千万级的数据时，即使不考虑兼容选用效率最高的方式，也需要几秒钟才能处理完（具体时长主要受数据重复率影响），这样会造成页面卡死的结果。因为JavsScript是单线程处理的，所以在数据未处理完时，后面的任务会等待。今天就来解决一下因任务量过大，造成的页面卡顿如何解决。</p>
+<h1><a id="_4"></a>单线程处理大数据演示</h1>
+<h2><a id="_5"></a>单线程去重代码</h2>
+<pre><code class="prism language-javascript"><span class="token comment">// 创建一个五百万条，重复10%的数据</span>
+<span class="token keyword">var</span> arr <span class="token operator">=</span> Array<span class="token punctuation">.</span><span class="token keyword">from</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Array</span><span class="token punctuation">(</span><span class="token number">5000000</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span>item2<span class="token punctuation">,</span> i<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> i <span class="token operator">%</span> <span class="token number">10</span> <span class="token operator">&lt;</span> <span class="token number">0.1</span> <span class="token operator">||</span> Math<span class="token punctuation">.</span><span class="token function">random</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token comment">// 去重函数</span>
+<span class="token keyword">function</span> <span class="token function">distinct</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> newArray <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> newMap <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> len <span class="token operator">=</span> arr<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> len<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>newMap<span class="token punctuation">.</span><span class="token keyword">get</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">// newMap.has(arr[i])</span>
+      newMap<span class="token punctuation">.</span><span class="token keyword">set</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      newArray<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">return</span> newArray<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 输出耗时数据函数</span>
+<span class="token keyword">function</span> <span class="token function">printTime</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`数据长度：</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>arr<span class="token punctuation">.</span>length<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">)</span>
+  console<span class="token punctuation">.</span><span class="token function">time</span><span class="token punctuation">(</span><span class="token string">"耗时"</span><span class="token punctuation">)</span>
+  <span class="token keyword">var</span> newArr <span class="token operator">=</span> <span class="token function">distinct</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span>
+  console<span class="token punctuation">.</span><span class="token function">timeEnd</span><span class="token punctuation">(</span><span class="token string">"耗时"</span><span class="token punctuation">)</span>
+  console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`数据重复量：</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>arr<span class="token punctuation">.</span>length <span class="token operator">-</span> newArr<span class="token punctuation">.</span>length<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 执行去重并后续跟随其余代码</span>
+<span class="token function">printTime</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'去重后的代码执行'</span><span class="token punctuation">)</span>
+</code></pre>
+<h2><a id="_38"></a>动图演示</h2>
+<p><img src="https://img-blog.csdnimg.cn/20200325112232291.gif" alt="在这里插入图片描述"><br>
+这里可以看到去重后面的代码，是要去重完全结束后才会去执行。还有小伙伴们可以自行把代码复制到自己的浏览器中运行，可以发现，页面会处于短暂的卡顿现象。因为JavaScript 语言采用的是单线程模型，因此中途如果处理像上方的计算密集型或高延迟的去重，就会造成页面卡顿，会给用户造成不好的体验。</p>
+<h1><a id="_42"></a>多线程处理大数据演示</h1>
+<h2><a id="_43"></a>多线程去重代码</h2>
+<pre><code class="prism language-javascript"><span class="token comment">// 创建一个五百万条，重复10%的数据</span>
+<span class="token keyword">var</span> arr <span class="token operator">=</span> Array<span class="token punctuation">.</span><span class="token keyword">from</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Array</span><span class="token punctuation">(</span><span class="token number">5000000</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span>item2<span class="token punctuation">,</span> i<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> i <span class="token operator">%</span> <span class="token number">10</span> <span class="token operator">&lt;</span> <span class="token number">0.1</span> <span class="token operator">||</span> Math<span class="token punctuation">.</span><span class="token function">random</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token comment">// 去重函数</span>
+<span class="token comment">// 将要放入Worker线程的函数，此处为处理完数据后，将数据post出去，然后在主线程监听捕获。</span>
+<span class="token keyword">function</span> <span class="token function">distinct</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> arr <span class="token operator">=</span> e<span class="token punctuation">.</span>data<span class="token punctuation">;</span>
+  <span class="token keyword">const</span> newArray <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> newMap <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> len <span class="token operator">=</span> arr<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> len<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>newMap<span class="token punctuation">.</span><span class="token keyword">get</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">// newMap.has(arr[i])</span>
+      newMap<span class="token punctuation">.</span><span class="token keyword">set</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      newArray<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  self<span class="token punctuation">.</span><span class="token function">postMessage</span><span class="token punctuation">(</span>newArray<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 创建Worker线程</span>
+<span class="token keyword">var</span> blob <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Blob</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token template-string"><span class="token string">`
+    self.addEventListener('message', </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>distinct<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">, false);
+`</span></span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 内部字符串内容将在Worker线程中执行，监听主线程发送来的数据，并使用上方的去重函数处理</span>
+<span class="token keyword">var</span> url <span class="token operator">=</span> window<span class="token punctuation">.</span><span class="token constant">URL</span><span class="token punctuation">.</span><span class="token function">createObjectURL</span><span class="token punctuation">(</span>blob<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> worker <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Worker</span><span class="token punctuation">(</span>url<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 主线程监听worker线程返回的数据</span>
+worker<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'message'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span>event<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  console<span class="token punctuation">.</span><span class="token function">timeEnd</span><span class="token punctuation">(</span><span class="token string">"耗时"</span><span class="token punctuation">)</span>
+  console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`数据重复量：</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>arr<span class="token punctuation">.</span>length <span class="token operator">-</span> event<span class="token punctuation">.</span>data<span class="token punctuation">.</span>length<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">)</span>
+  worker<span class="token punctuation">.</span><span class="token function">terminate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment">// 使用完后需关闭 Worker</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token comment">// 执行去重并后续跟随其余代码</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`数据长度：</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>arr<span class="token punctuation">.</span>length<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">time</span><span class="token punctuation">(</span><span class="token string">"耗时"</span><span class="token punctuation">)</span>
+worker<span class="token punctuation">.</span><span class="token function">postMessage</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span> <span class="token comment">// 发送数据至Worker线程处理</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'去重后的代码执行'</span><span class="token punctuation">)</span>
+</code></pre>
+<h2><a id="_86"></a>动图演示</h2>
+<p><img src="https://img-blog.csdnimg.cn/20200325112815720.gif" alt="在这里插入图片描述"><br>
+这里可以看到，去重后的代码执行不会受去重影响，去重完成后要处理的任务，会在主线程的监听Worker线程事件中触发，然后执行任务，虽然看起来耗时稍微长了，但是因为是开辟一个新的Worker线程，所以不会造成页面卡顿，用户体验就上升了。</p>
+<h1><a id="_89"></a>总结</h1>
+<p>这里主要演示了在处理计算密集型或高延迟的任务时，如何让页面不卡顿，Worker 的更多使用方法可以去<a href="http://www.ruanyifeng.com/blog/2018/07/web-worker.html">阮老师的教程</a>中学习，也可以去MDN 看<a href="https://developer.mozilla.org/zh-CN/docs/Web/API/Worker">Worker API</a> 和上方用到的 <a href="https://developer.mozilla.org/zh-CN/docs/Web/API/Blob">Blob</a>，上述去重代码使用的是 <a href="https://blog.csdn.net/rudy_zhou/article/details/103971730">这篇博客中Map方法去重</a>，有兴趣的同学可以去看看。</p>
+<p>以上如有错误或疏漏请指正，谢谢。</p>
+</div>
+</body>
+
+</html>

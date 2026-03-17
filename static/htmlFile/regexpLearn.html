@@ -1,0 +1,318 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>前端如何理解正则-由浅入深的学习</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>前端如何理解正则-由浅入深的学习</h3><ul><li><a href="#_1">引言</a></li><li><a href="#_4">正则简单语法</a></li><li><a href="#_69">正则语法练习</a></li><ul><li><a href="#font_size3__matchfont_70">获取字符串内`[]`(含)内的数据<font size="3">（使用字符串方法 `match`）</font></a></li><li><a href="#font_size3_test_font_86">判断字符串是否存在英文以外的字符<font size="3">（使用正则方法 `test` ）</font></a></li><li><a href="#xxxxxxxxfont_size3_test_font_100">判断字符串是否为xxxx-xx-xx格式的日期<font size="3">（使用正则方法 `test` ）</font></a></li><li><a href="#font_size3_match_font_118">从字符串中获取日期<font size="3">（使用字符串方法 `match` ）</font></a></li></ul><li><a href="#_128">常用正则分析</a></li><ul><li><a href="#IP__131">IP 正则的验证与或获取</a></li><li><a href="#__176">邮箱 正则的验证与获取</a></li></ul><li><a href="#_213">正则深入学习</a></li><ul><li><a href="#ASCIIUnicode_214">匹配ASCII码与Unicode码表数据</a></li><li><a href="#g_m_i_241">修饰符`g` `m` `i`</a></li><li><a href="#_260">`()`组的用法</a></li><li><a href="#__282">零宽断言 正则的预查</a></li><li><a href="#_341">零宽断言之密码复杂度</a></li></ul><li><a href="#_371">结语</a></li></ul></div><p></p>
+<h1><a id="_1"></a>引言</h1>
+<p>  正则在平时工作中用得蛮多的，比如说<strong>验证</strong>、<strong>文本搜索</strong>、<strong>文本替换</strong>、<strong>服务配置</strong>…。之前就常有同事直接发我规则，让我写个<strong>正则</strong>给他。自己也因为在编辑一个公众号的内容，需要将图片上的文本录入<strong>图文</strong>(文章)。于是就想着调用百度的图片识别API，将返回的数据格式化 <strong>(通过正则判断需要获取的值)</strong> 后，再插入网页版公众号编辑器，所以对于正则用得更多了。<br>
+  所以我觉得正则这东西，只需要掌握其中几个核心的<strong>元字符</strong>，然后简单练习一下，再找几个稍复杂的案例详细解释，这样就能掌握书写正则的规律，最后再学习缩写后的常用符号就能完全理解了。</p>
+<h1><a id="_4"></a>正则简单语法</h1>
+<p>除了普通字符，还有一些<code>元字符</code>则具有特殊的含义，比如下面的这些：</p>
+<table>
+	<colgroup><col width="75px"><col></colgroup>
+	<thead>
+		<tr><th>元字符</th><th>描述</th></tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>\</td>
+			<td align="left">正则的转义符，有三种情况：
+				<br>1. <code>\</code> 加上元字符，表示匹配<b>元字符</b>所使用的普通字符，比如要匹配<b>普通字符</b> <code> \</code>，就要写<code>\\</code>。
+				<br>2. <code>\</code> 加上非元字符，组成一种由具体实现方式规定其意义的元字符序列 如<code>\d</code>表示匹配一个<b>数字字符</b>。
+				<br>3. <code>\</code> 加上任意其他字符，默认情况就是匹配此字符，也就是说，反斜线被忽略了。
+			</td>
+		</tr>
+		<tr>
+			<td>^</td>
+			<td align="left">匹配文本行首。如果设置了<b>RegExp</b>对象的<code>Multiline</code>属性，	 <code>^</code>也匹配<code>\n</code>或<code>\r</code>之后的位置。用到<code>[]</code>元字符中第一位时是取反的意思。<br>
+			例如：<code>/^abc/</code> 匹配 <code>abc</code> <b>开头</b>的字符串。<br>
+			   <code>/^abc/m</code> 匹配多行 <code>abc</code> <b>开头</b>的字符串。
+			</td>
+		</tr>
+		<tr>
+			<td>$</td>
+			<td align="left">匹配文本行尾。如果设置了<b>RegExp</b>对象的<code>Multiline</code>属性，	 <code>^</code>也匹配<code>\n</code>或<code>\r</code>之后的位置。<br>
+			例如：<code>/abc$/</code> 匹配 <code>abc</code> <b>结尾</b>的字符串。<br>
+			   <code>/abc$/m</code> 匹配多行 <code>abc</code> <b>结尾</b>的字符串。
+			</td>
+		</tr>
+		<tr>
+			<td>|</td>
+			<td align="left">逻辑 <b>或</b> 的意思。例如：<code>/a|b/</code> 匹配 <code>a</code> 或者 <code>b</code> 。</td>
+		</tr>
+		<tr>
+			<td>()</td>
+			<td align="left">将<code>(</code> 和 <code>)</code> 之间的表达式定义为“<b>组</b>”（group），并且将匹配这个表达式的字符保存到一个临时区域（一个正则表达式中最多可以保存9个），它们可以用<code>\1</code> 到 <code>\9</code> 的符号来引用。<br>
+			例如：<code>/([a-z])\1/</code>，假如第一个括号内的<code>[a-z]</code>匹配到字母 <code>d</code>，那么<code>\1</code>就相当于<code>d</code>。<br>
+			   以此类推，<code>\2</code>就是第二个括号内匹配到的内容。（后面深入部分举例讲）
+			</td>
+		</tr>
+		<tr>
+			<td>[]</td>
+			<td align="left">带有 <b>或</b> 关系的一组数据，并可定义区间。<br>
+			例如：<code>[abc]</code>匹配<code>a</code>或<code>b</code>或<code>c</code>。<br>
+			   <code>[a-z]</code>匹配<code>a</code>到<code>z</code>的小写字母。<br>
+			   <code>[^a-z]</code>匹配除<code>a</code>到<code>z</code>之间字符<b>以外的任意单字符</b>，包括空字符。
+			</td>
+		</tr>
+		<tr>
+			<td>{}</td>
+			<td align="left">包含一个(段)数量的<b>量词</b>，给<b>匹配符</b>添加数量，不能为负整数。 <br>
+			例如：<code>/a{2}/</code>，匹配连续的<code>2</code>个<code>a</code>。<br>
+   <code>/a{2,}/</code>，匹配连续的<code>&gt;=2</code>个<code>a</code>。<br>
+   <code>/a{0,5}/</code>，匹配连续的<code>&gt;=0 &amp;&amp; &lt;=5</code>个<code>a</code>。<br>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<p>当然元字符并不止这么一点，还有<a href="https://www.runoob.com/jsref/jsref-obj-regexp.html">更多</a>。<br>
+但是只要知道以上几种<strong>元字符</strong>，就能书写大部分正则规则了，以下用例子把上面描述的内容实际展示一下。</p>
+<br>
+<h1><a id="_69"></a>正则语法练习</h1>
+<h2><a id="font_size3__matchfont_70"></a>获取字符串内<code>[]</code>(含)内的数据<font size="3">（使用字符串方法 <code>match</code>）</font></h2>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'今天学习了[RegExp]对象'</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> reg <span class="token operator">=</span> <span class="token regex">/\[[a-zA-Z]{0,}\]/</span><span class="token punctuation">;</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>reg<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// =&gt; ["[RegExp]"] </span>
+</code></pre>
+<p>这里就用到了<code>[a-zA-Z]</code>，里面规则是匹配大小写字母，而紧跟着的<code>{0,}</code>，是匹配0个或多个大小写字母。<br>
+前后的<code>\[</code> <code>\]</code>，就是用到了<code>\</code>元字符的第一种情况。<br>
+<code>-</code> 在<code>[a-z]</code>、<code>[0-9]</code>等等之间属于连字符，表示之间的意思<br>
+<code>[a-z-]</code>中<code>z</code>后面的<code>-</code>表示匹配普通字符<code>-</code>，实在不清楚就用<code>\</code>转义<br>
+<code>[a-z]</code>匹配所有小写字母<br>
+<code>[a\-z]</code>匹配<code>a</code>，<code>-</code> ，<code>z</code>。<br>
+<br></p>
+<h2><a id="font_size3_test_font_86"></a>判断字符串是否存在英文以外的字符<font size="3">（使用正则方法 <code>test</code> ）</font></h2>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'StackOverflow'</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> str2 <span class="token operator">=</span> <span class="token string">'我在TrendyTech上班'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> reg <span class="token operator">=</span> <span class="token regex">/[^a-zA-Z]$/</span><span class="token punctuation">;</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> reg<span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>str<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; false</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> reg<span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>str2<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; true</span>
+</code></pre>
+<p>这里在<code>[]</code>内用到了<code>^</code>，意思就是取反中括号内的匹配项，整体的意思就是匹配除大小写字母以外的任意字符。<br>
+<br></p>
+<h2><a id="xxxxxxxxfont_size3_test_font_100"></a>判断字符串是否为xxxx-xx-xx格式的日期<font size="3">（使用正则方法 <code>test</code> ）</font></h2>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'2020-01-12'</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> str2 <span class="token operator">=</span> <span class="token string">'2020年1月1日'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> reg <span class="token operator">=</span> <span class="token regex">/^([0-9]{4})-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[01])$/</span><span class="token punctuation">;</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> reg<span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>str<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; true</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> reg<span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>str2<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; false</span>
+</code></pre>
+<p>这一段正则看起来长，其实拆分一下很简单，总共分为三部分<br>
+第一部分<code>[0-9]{4}</code> 匹配年份，年份为四个数字组成<br>
+第二部分<code>(0[1-9]|1[0-2])</code> 匹配月份，<code>0[1-9]</code> 匹配 <strong>01~09</strong>，<code>1[0-2]</code> 匹配 <strong>10~12</strong>。<br>
+第三部分<code>(0[1-9]|[1-2][0-9]|3[01])</code> 匹配日期，<code>0[1-9]</code> 匹配 <strong>0~9</strong>，<code>[1-2][0-9]</code> 匹配 <strong>10~29</strong>，<code>3[01]</code> 匹配 <strong>30,31</strong></p>
+<p>虽然此正则不是很严谨，比如小月和平月没有31天，不过能说明规则就好。<br>
+<br></p>
+<h2><a id="font_size3_match_font_118"></a>从字符串中获取日期<font size="3">（使用字符串方法 <code>match</code> ）</font></h2>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'今天是2020-01-12，马上就放假了'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> reg <span class="token operator">=</span> <span class="token regex">/([0-9]{4})-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[01])/</span><span class="token punctuation">;</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>reg<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; 2020-01-12</span>
+</code></pre>
+<p>这次的正则对比上面的只移除了<code>^</code> <code>$</code>，使用<code>match</code>方法，获取到了字符串中的 <code>xxxx-xx-xx</code> 格式的时间字符串。</p>
+<h1><a id="_128"></a>常用正则分析</h1>
+<p>好了，以上几个例子已经能够把正则基础的信息完整讲明了，那我们再解析几个常用的正则，最终你会发现，其实看起来很复杂的正则也是一个一个短的逻辑段拼凑而成。</p>
+<h2><a id="IP__131"></a>IP 正则的验证与或获取</h2>
+<p>大多数情况，<strong>验证</strong>与<strong>获取</strong>的区别在于是否添加了行首<code>^</code>、行尾<code>$</code>验证。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> ipReg <span class="token operator">=</span> <span class="token regex">/^(((2(5[0-5]|[0-4][0-9]))|[0-1]{0,1}[0-9]{1,2})\.){3}((2(5[0-5]|[0-4][0-9]))|[0-1]{0,1}[0-9]{1,2})$/</span><span class="token punctuation">;</span>
+</code></pre>
+<p>IP是由 <code>xxx.xxx.xxx.xxx</code> 格式组成，<code>xxx</code> 的值为 <code>0~255</code>，所以我们<strong>第一步</strong>写个<code>0~255</code> 的正则。</p>
+<p><code>0~255</code> 的正则 就是 <code>(2(5[0-5]|[0-4][0-9]))|[0-1]{0,1}[0-9]{1,2}</code></p>
+<p>太长了我们在拆分一下，分为 <code>0~199</code>，<code>200~255</code><br>
+<code>0~199</code> 的正则是 <code>[0-1]{0,1}[0-9]{1,2}</code><br>
+ <font size="2">解释：百位是0-1，匹配0-1次就是可以没有百位。个位十位取值0-9，匹配1-2次就是0-99之间的数。</font><br>
+<code>200~255</code> 的正则是 <code>2(5[0-5]|[0-4][0-9])</code><br>
+ <font size="2">解释：百位固定为2，十位这里分为5和0-4，5的情况下个位为0-5，0-4的情况下，个位是0-9。</font></p>
+<p>因为<code>0~199</code> 和 <code>200~255</code> 拼接起来就要用<code>()</code>+或<code>|</code>连接起来，就成了上面<code>0~255</code>的正则。</p>
+<p><code>0~255</code>由<code>.</code>拼接，就成了 <code>0~255</code>.<code>0~255</code>.<code>0~255</code>.<code>0~255</code>。<br>
+这里由于<code>.</code>是匹配除<strong>换行和回车符</strong>以外的任意单字符的<strong>元字符</strong>，所以加斜线<code>\.</code>转义为普通字符<code>.</code>。</p>
+<p>因为上面 有重复规律就是 <code>0~255</code>. 出现三次所以用<code>()</code>括起来，再用量词<code>{3}</code>乘以三。<br>
+<code>0~255</code>.<code>0~255</code>.<code>0~255</code>. 的正则就是 <code>((2(5[0-5]|[0-4][0-9]))|[0-1]{0,1}[0-9]{1,2})\.){3}</code></p>
+<p>加上最后的<code>0~255</code>就是完整匹配IP的正则了。<br>
+用一张图表明：<br>
+<img src="https://img-blog.csdnimg.cn/20200122110228487.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+正则很长，其实可以稍微减短一点，之前说过，<strong>元字符</strong><code>\</code>加非元字符，会有一些常用匹配的集合，比如：<br>
+<code>[0-9]</code> 可以用 <code>\d</code>替换，<code>{0,1}</code>可以用<code>?</code>替换。<br>
+简写一下上面的规则就是</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> ipReg <span class="token operator">=</span> <span class="token regex">/^(((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})\.){3}((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})$/</span><span class="token punctuation">;</span>
+</code></pre>
+<p>像这样的常用匹配集合有<a href="https://baike.baidu.com/item/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/1700215?fr=aladdin">很多</a>，在未熟练掌握正则之前先不要使用，可以把写完的正则再一一对应替换。</p>
+<p>去掉首尾的<code>^</code> <code>$</code>，用来匹配字符串中的IP。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> ipReg <span class="token operator">=</span> <span class="token regex">/(((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})\.){3}((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})/</span><span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'这个项目部署在192.168.101.255上面。'</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>ipReg<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; 192.168.101.255</span>
+</code></pre>
+<h2><a id="__176"></a>邮箱 正则的验证与获取</h2>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> emailReg <span class="token operator">=</span> <span class="token regex">/^[a-zA-Z0-9][a-zA-Z0-9_.-]{1,}@([a-zA-Z0-9_-]{1,}\.){1,}[a-zA-Z0-9_-]{1,}$/</span><span class="token punctuation">;</span>
+</code></pre>
+<p>普通邮箱格式：<strong>邮箱名称</strong>由 字母、数字、<code>.</code>、<code>_</code>、<code>-</code>组成，首字母为字母或数字<br>
+       <strong>域名部分</strong>由 字母、数字、<code>_</code>、<code>-</code>组成，<code>.</code>连接</p>
+<p><strong>邮箱名称正则</strong> <code>[a-zA-Z0-9][a-zA-Z0-9_.-]{1,}</code><br>
+ <font size="2">解释：字母、数字开头，后面跟着字母、数字、_、.、-，重复1次或多次</font></p>
+<p>中间加 <code>@</code>连接</p>
+<p><strong>邮箱域名正则</strong> <code>([a-zA-Z0-9_-]{1,}\.){1,}[a-zA-Z0-9_-]{1,}</code><br>
+拆分为 <code>[a-zA-Z0-9_-]{1,}</code> 和 <code>.</code>，然后组合成<code>xxx.xxx.xxx</code>格式的邮箱域名正则。<br>
+ <font size="2">解释：字母、数字、-、_，重复1次或多次</font></p>
+<p>用一张图表示：<br>
+<img src="https://img-blog.csdnimg.cn/20200122111033492.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+同样邮箱域名也可以缩写，<strong>元字符</strong> <code>+</code> 和 <code>{1,}</code> 等价，<code>\w</code> 类似 <code>[a-zA-Z0-9_]</code> (这里是类似，不是等价)。</p>
+<p>缩写后的正则就是</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> emailReg <span class="token operator">=</span> <span class="token regex">/^[a-zA-Z0-9][\w.-]+@([\w-]+\.){1,}[\w-]+$/</span><span class="token punctuation">;</span>
+</code></pre>
+<p>还有很多邮箱的规则这里并不完全匹配，如果要匹配比较特殊的邮箱，比如有中文，可以根据以上所学到的自行添加。</p>
+<p>去掉首尾的 <code>^</code> <code>$</code> ，用来匹配字符串中的邮箱。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> emailReg <span class="token operator">=</span> <span class="token regex">/[a-zA-Z0-9][\w.-]+@([\w-]+\.){1,}[\w-]+/</span><span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'我的google邮箱是zhouyu0229@gmail.com，你的邮箱呢？。'</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>emailReg<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; zhouyu0229@gmail.com</span>
+</code></pre>
+<h1><a id="_213"></a>正则深入学习</h1>
+<h2><a id="ASCIIUnicode_214"></a>匹配ASCII码与Unicode码表数据</h2>
+<p>比如说匹配 <code>@</code> ，我们不单可以用普通字符<code>@</code>，也可以使用 ASCII码的八进制、十六进制匹配和Unicode码匹配，看下面例子。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'我是@符号'</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> OCTReg <span class="token operator">=</span> <span class="token regex">/\100/</span><span class="token punctuation">;</span> <span class="token comment">// 八进制ASCII码</span>
+<span class="token keyword">var</span> sexadecimalReg <span class="token operator">=</span> <span class="token regex">/\x40/</span><span class="token punctuation">;</span> <span class="token comment">// 十六进制ASCII码</span>
+<span class="token keyword">var</span> unicodeReg <span class="token operator">=</span> <span class="token regex">/\u0040/</span><span class="token punctuation">;</span> <span class="token comment">// Unicode码</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>OCTReg<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; @</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>sexadecimalReg<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; @</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>unicodeReg<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; @</span>
+</code></pre>
+<p>可以看到，都能匹配到 <code>@</code> 符号，不但能单个匹配也能区间匹配，比如匹配<code>A</code> 到 <code>D</code></p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'我是在AB幼儿园上学，小明在CD幼儿园上学，小刚在EG幼儿园上学'</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> OCTReg <span class="token operator">=</span> <span class="token regex">/[\101-\104]/g</span><span class="token punctuation">;</span> <span class="token comment">// 八进制ASCII码</span>
+<span class="token keyword">var</span> sexadecimalReg <span class="token operator">=</span> <span class="token regex">/[\x41-\x44]/g</span><span class="token punctuation">;</span>  <span class="token comment">// 十六进制ASCII码</span>
+<span class="token keyword">var</span> unicodeReg <span class="token operator">=</span> <span class="token regex">/[\u0041-\u0044]/g</span><span class="token punctuation">;</span> <span class="token comment">// Unicode码</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>OCTReg<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; ["A", "B", "C", "D"]</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>sexadecimalReg<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; ["A", "B", "C", "D"]</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>unicodeReg<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; ["A", "B", "C", "D"]</span>
+</code></pre>
+<p>可以看到把字符串内的 <code>A</code> <code>B</code> <code>C</code> <code>D</code>，都取出来了，最后的 <code>g</code> ，是修饰符。（下面解释）<br>
+所以可以用过区间方式匹配两个码表的所有字符，比如用unicdoe匹配中文字符，中文字符的编码范围是<code>4E00-9FA5</code>，正则就写成<code>[\u4E00-\=u9FA5]</code>，另外还有很多。完整的<a href="https://baike.baidu.com/item/ASCII/309296?fr=aladdin">ASCII</a>和<a href="https://baike.baidu.com/item/Unicode/750500?fr=aladdin">Unicode</a>码表参考。</p>
+<h2><a id="g_m_i_241"></a>修饰符<code>g</code> <code>m</code> <code>i</code></h2>
+<p><code>g</code> 是 <code>global</code>全局匹配，默认情况下是非全局匹配，匹配到一个就结束，全局匹配是匹配所有数据。还有两个修饰符分别是 <code>i</code> <code>m</code><br>
+<code>i</code>  是 <code>ignoreCase</code> 忽略大小写的意思很好理解<br>
+<code>m</code> 是 <code>multiline</code> 多行匹配，比如 <code>/^a/</code> 只匹配第一行开头是否为 <code>a</code> ，而加了<code>m</code> ，就是每一行开头都匹配。比如下面：</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> ignoreCaseStr <span class="token operator">=</span> <span class="token string">'[a-z]和[A-Z]是不同的'</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> multilineStr <span class="token operator">=</span> <span class="token template-string"><span class="token string">`a同学大了b同学，b同学不满a同学打了他，就还手打了
+a同学`</span></span><span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> ignoreCaseReg <span class="token operator">=</span> <span class="token regex">/[A-Z]/gi</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> multilineReg <span class="token operator">=</span> <span class="token regex">/^a/gm</span><span class="token punctuation">;</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> multilineStr<span class="token punctuation">.</span><span class="token function">replace</span><span class="token punctuation">(</span>multilineReg<span class="token punctuation">,</span><span class="token string">'A'</span><span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// =&gt; A同学大了b同学，b同学不满a同学打了他，就还手打了</span>
+<span class="token comment">// =&gt; A同学</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> ignoreCaseStr<span class="token punctuation">.</span><span class="token function">replace</span><span class="token punctuation">(</span>ignoreCaseReg<span class="token punctuation">,</span> <span class="token string">'x'</span><span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// =&gt; [x-x]和[x-x]是不同的</span>
+</code></pre>
+<p>可以看到行首的 <code>a</code> 替换成了 <code>A</code>，而中间的没有，第二个正则内只写了大写的字母匹配，加了 <code>i</code> 修饰符，小写的也被匹配到用<code>replace</code>方法替换成了<code>x</code>。</p>
+<h2><a id="_260"></a><code>()</code>组的用法</h2>
+<p><strong>元字符</strong>语法中说道，将<code>(</code> 和 <code>)</code> 之间的表达式定义为“组”（group），并且将匹配这个表达式的字符保存到一个临时区域（一个正则表达式中最多可以保存9个），它们可以用 <code>\1</code> 到 <code>\9</code> 的符号来引用。特殊用法除外。比如：</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> groupReg <span class="token operator">=</span> <span class="token regex">/([A-Z])([A-Z])\2/g</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> groupStr <span class="token operator">=</span> <span class="token string">'我们公司有很多ABB格式名字的同事，ABC、AB格式的不多，我们吃饭一般都是AA制'</span><span class="token punctuation">;</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> groupStr<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>groupReg<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; ["ABB"]</span>
+</code></pre>
+<p>上面输出了包含 <code>ABB</code> 的数组，正则的意思就是第一个<code>()</code> 内的匹配到<code>A</code> ，如果后面要引用 就用<code>\1</code> 。但我们这里的例子用的 <code>\2</code>，就是用的第二个<code>()</code> 内匹配到的数据，也就是<code>B</code>，所以<code>\2</code> 内临时存的就是 <code>B</code>，因此这里只能匹配第二、第三个字母相同的数据。</p>
+<p>用上面写过的获取日期格式的正则来描述一下<code>()</code>组的用法。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'今天是2020-01-12，天气很好。'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> reg <span class="token operator">=</span> <span class="token regex">/([0-9]{4})-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[01])/</span><span class="token punctuation">;</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">replace</span><span class="token punctuation">(</span>reg<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`$1年$2月$3日`</span></span><span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; 今天是2020年01月12日，天气很好。</span>
+</code></pre>
+<p>这里可以看到<code>2020-01-12</code> 替换成了 <code>2020年01月12日</code>，因为上面有三个<code>()</code>组，分别<code>\1</code> 存了年、<code>\2</code>存月、<code>\3</code>存 日，然后使用<code>replace</code>。这里在替换中的用法就是<code>$</code> + number，和在正则中使用<code>\</code>+ number，是一样的，都是一一对应的，并且也最多支持临时存9个。</p>
+<h2><a id="__282"></a>零宽断言 正则的预查</h2>
+<p>断言用来声明一个应该为真的事实。正则表达式中只有当断言为 <strong>真</strong> 时才会继续进行匹配。<br>
+零宽断言分为以下四种：<br>
+<code>(?=pattern)</code> 零宽度 <strong>正预测先行</strong> 断言（也叫正向肯定预查）<br>
+举例：查找<strong>15岁</strong>的小伙伴</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'小明17岁，小刚15岁，小红16岁，小茗15岁'</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> reg <span class="token operator">=</span> <span class="token regex">/[\u4E00-\u9FA5]{2}(?=15岁)/g</span><span class="token punctuation">;</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>reg<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; ["小刚", "小茗"]</span>
+</code></pre>
+<p>以上正则匹配 <strong>15岁</strong> 之前的两个中文字（不包含断言内的数据），所以输出了 <strong>小刚</strong>，<strong>小茗</strong></p>
+<p><code>(?&lt;=pattern)</code> 零宽度 <strong>正回顾后发</strong> 断言（也叫反向肯定预查）<br>
+举例：查找<strong>小茗</strong>多少岁</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'小明17岁，小刚15岁，小红16岁，小茗15岁'</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> reg <span class="token operator">=</span> <span class="token regex">/(?&lt;=小茗)\d{2}/g</span><span class="token punctuation">;</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>reg<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; ["15"]</span>
+</code></pre>
+<p>以上正则查找小茗后面的 <strong>两个数字</strong>（不包含断言内的数据），所以输出了 <strong>15</strong><br>
+<code>(?&lt;=pattern)</code>  和 <code>(?=pattern)</code> 同时使用就可以查某某区间的值，比如：</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'&lt;div&gt;我是div里的内容&lt;/div&gt;&lt;div&gt;我是第二个div的内容&lt;/div&gt;'</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> reg <span class="token operator">=</span> <span class="token regex">/(?&lt;=&lt;(div)&gt;).*(?=&lt;\/\1&gt;)/</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> reg2 <span class="token operator">=</span> <span class="token regex">/(?&lt;=&lt;(div)&gt;).*?(?=&lt;\/\1&gt;)/</span><span class="token punctuation">;</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>reg<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; 我是div里的内容&lt;/div&gt;&lt;div&gt;我是第二个div的内容</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>reg2<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt; 我是div里的内容</span>
+</code></pre>
+<p>这里就输出了 <code>div</code> 标签里的内容，但是我们看到了两种情况。<br>
+第一种输出最前端和最后端<code>div</code>之间的数据，第二种是只输出了前面<code>div</code>内的数据。<br>
+这也涉及到<strong>贪婪模式</strong>（<code>*</code>，<code>+</code>，<code>?</code>，<code>{n}</code>，<code>{n,}</code>，<code>{n,m}</code>默认是贪婪模式），这些限制符后加上<code>?</code>，就是<strong>非贪婪模式</strong>，就像上方的例子一样，中间的 <code>.</code> <strong>元字符</strong> 一个是尽可能的多匹配，一个是尽可能的少匹配。</p>
+<p>我们在这里也使用了前面学到的，第一个<code>()</code> （零宽断言的括号不存数据）把取到的 <code>div</code> 暂存，在后面用 <code>\1</code> 取了出来，相当于<code>&lt;\/div&gt;</code>，<code>/</code> 需要转义所以使用了 <code>\/</code>。</p>
+<p><code>(?!pattern)</code> 零宽度 <strong>负预测先行</strong> 断言（也叫正向否定预查）<br>
+举例：查找不是 <strong>15岁</strong> 的小伙伴</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'小明17岁，小刚15岁，小红16岁，小茗15岁'</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> reg <span class="token operator">=</span> <span class="token regex">/[\u4E00-\u9FA5]{2}(?!15岁)/g</span><span class="token punctuation">;</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>reg<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt;  ["小明", "小红"]</span>
+</code></pre>
+<p>这个正则就查找了不是 <strong>15岁</strong> 结尾的前两个字（不包含断言内的数据），输出了不是15岁的 <strong>小明</strong>、<strong>小红</strong></p>
+<p><code>(?&lt;!pattern)</code> 零宽度 <strong>负回顾后发</strong> 断言（也叫反向否定预查）<br>
+举例：查找 <strong>小红以外</strong> 的小伙伴年龄</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> str <span class="token operator">=</span> <span class="token string">'小明17岁，小刚15岁，小红16岁，小茗15岁'</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> reg <span class="token operator">=</span> <span class="token regex">/(?&lt;!小红)\d{2}/g</span><span class="token punctuation">;</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span> str<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>reg<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// =&gt;  ["17", "15", "15"]</span>
+</code></pre>
+<p>这个正则就查找了 <strong>小红以外</strong> 后面跟着两个数字的数据（不包含断言内的数据），输出了 <strong>小红以外</strong> 其他小伙伴年龄。</p>
+<h2><a id="_341"></a>零宽断言之密码复杂度</h2>
+<p><strong><font size="4">零宽断言不但能匹配数据，同样也能判断数据，比如设置判断密码复杂度的正则：</font></strong><br>
+规则：密码必须包含 字母、数字、_，6~32位。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> reg <span class="token operator">=</span> <span class="token regex">/(?=.*[a-zA-Z])(?=.*\d)(?=.*_)^\w{6,32}$/</span><span class="token punctuation">;</span>
+</code></pre>
+<p><img src="https://img-blog.csdnimg.cn/20200122215139798.gif" alt="在这里插入图片描述"><br>
+这个正则前面的<strong>零宽断言</strong> <code>(?=.*[a-zA-Z])(?=.*\d)(?=.*_)</code> 判断字符串是否出现 字母、数字、_ ，有的话正则就继续往下执行，直到执行<strong>消耗</strong>匹配 <code>^\w{6,32}$</code> ，判断字符必须是字母、数字、_  开头和结尾。<br>
+至于为什么前面要写 <code>.*</code>，用两个<strong>连续的零宽断言</strong>测试就能知道了。<br>
+<code>(?=[a-zA-Z])</code> 能判断字符串内是否出现字母<br>
+<code>(?=[a-zA-Z])(?=\d)</code> 无法判断字母或数字是否出现，因为判断存在冲突。<br>
+<img src="https://img-blog.csdnimg.cn/20200122213801132.gif" alt="在这里插入图片描述"><br>
+从这张gif动图不难发现，当要匹配的数据是<strong>字母</strong>开头跟着<strong>数字</strong>时，断言<strong>数字</strong>的正则前方必须写已<strong>断言</strong>匹配到的<code>a</code>，反过来毅然。</p>
+<p>因为我们不能控制用户先输入字母、数字、_ 中的哪一个，所以我们在 <strong>零宽断言</strong>  上加 <code>.*</code> 匹配0个或多个<code>.</code>，是为了不管哪个类型的字符先输入，或者间隔多少字符再输入其它类型字符时，判断其它类型的<strong>零宽断言</strong>也能继续判断下去（再讲一遍 <code>.</code> 是匹配除换行和回车符以外任意单字符的）。</p>
+<p>简单讲，不管单个<strong>零宽断言</strong>还是多个<strong>零宽断言</strong>，都是<strong>断言</strong>的字符串位置，多个<strong>断言</strong>组合起来判断字符串中是否出现这个组合规则的位置，出现就返回<strong>true</strong>，不出现就返回<strong>fasle</strong>。</p>
+<p><strong><font size="2">以上内容不易理解就多读几遍，或者根据gif内容自行测试几遍。</font></strong></p>
+<p><strong><font size="4">再写一个密码验证</font></strong><br>
+规则：密码必须包含 字母、数字、_中的至少两种6~32位。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> reg <span class="token operator">=</span> <span class="token regex">/(?=.*[a-zA-Z\d])(?=.*[\d_])(?=.*[a-zA-Z_])^\w{6,32}$/</span><span class="token punctuation">;</span>
+</code></pre>
+<p><img src="https://img-blog.csdnimg.cn/20200122221649764.gif" alt="在这里插入图片描述"><br>
+这里是三种类型字符取两种，这里的 <strong>零宽断言</strong> 判断的就是所有两两组合的情况，以此类推，四种类型取三种或者两种也是可以的，只是组合情况太多正则就比较长，就建议通过代码分开判断。</p>
+<h1><a id="_371"></a>结语</h1>
+<p>正则使用的地方有很多，用熟悉了能极大的提高工作效率，比如多数编辑器的搜索替换都是支持正则的，如果要替换或者搜索某个规律的字段，用正则无疑是最方便快捷的方式了。</p>
+<p>以上对正则的介绍就这些，看完这篇信息后，可以去<a href="https://baike.baidu.com/item/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/1700215?fr=aladdin">百度百科</a>上看更加详细的文档介绍，不过要注意，上面也有疏漏的地方，毕竟谁都可以改百度百科的内容。</p>
+<p>以上内容如有疏漏，或错误的地方欢迎指正，谢谢。</p>
+</div>
+</body>
+
+</html>

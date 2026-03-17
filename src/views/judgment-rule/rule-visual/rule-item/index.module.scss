@@ -1,0 +1,129 @@
+.rule-item {
+  display: flex;
+  flex-wrap: nowrap;
+  // pointer-events: none;
+  & + .rule-item {
+    margin-top: 20px;
+  }
+  :global {
+    .el-button,
+    .el-select,
+    .el-input,
+    .el-input-number {
+      pointer-events: all;
+    }
+    .rule-card-column {
+      position: relative;
+      &.column-wrap {
+        // z-index: 0;
+        padding-left: 50px;
+        .rule-item {
+          position: relative;
+          // 竖线
+          &::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 16px;
+            height: calc(100% + 20px);
+            border-left: 1px solid #a1a1a1;
+          }
+          &:last-of-type {
+            &::before {
+              display: none;
+            }
+          }
+          // 顶部横线
+          &:nth-of-type(1) {
+            .rule-card {
+              &::before {
+                content: '';
+                position: absolute;
+                left: -17px;
+                top: 16px;
+                width: 17px;
+                border-bottom: 1px solid #a1a1a1;
+              }
+            }
+          }
+          // 非顶部横线
+          & + .rule-item {
+            > .rule-card-column > .rule-card {
+              &::before {
+                content: '';
+                position: absolute;
+                top: 16px;
+                left: -26px;
+                width: 26px;
+                // border-bottom: 1px solid useThemeVar(rgba(34, 34, 34, 0.55));
+                border-bottom: 1px solid #a1a1a1;
+              }
+            }
+          }
+        }
+      }
+    }
+    .rule-card {
+      position: relative;
+      z-index: 1;
+      // width: 78px;
+    }
+    .top-left-line {
+      position: absolute;
+      margin-left: 78px;
+      margin-top: 16px;
+      width: 16px;
+      border-bottom: 1px solid #a1a1a1;
+    }
+    em.expand-icon {
+      cursor: pointer;
+      color: #222222;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      box-sizing: border-box;
+      border: 1px solid #a1a1a1;
+      // font-size: 24px;
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 94px;
+      margin-top: 7px;
+      z-index: 2;
+      border-radius: 50%;
+      background-color: #ffffff;
+      .text-number {
+        font-size: 12px;
+        font-style: normal;
+        transform: scale(0.8);
+      }
+    }
+
+    .simulate-node {
+      width: 680px;
+      height: 50px;
+      transform: translateY(-8px);
+      margin-left: 34px;
+    }
+
+    // 展开过度效果
+    .scale-left-top-enter-active,
+    .scale-left-top-leave-active {
+      transform-origin: 24px 16px;
+      transition: transform 0.3s linear;
+    }
+    .scale-left-top-enter-from {
+      transform: scale(0);
+    }
+    .scale-left-top-enter-to {
+      transform: scale(1);
+    }
+    .scale-left-top-leave-from {
+      transform: scale(1);
+    }
+    .scale-left-top-leave-to {
+      transform: scale(0);
+    }
+  }
+}

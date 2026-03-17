@@ -1,0 +1,12 @@
+.judgment-rule {
+  position: relative;
+  height: 100%;
+  :global {
+    .operation-group {
+      position: absolute;
+      z-index: 1;
+      left: 20px;
+      top: 20px;
+    }
+  }
+}

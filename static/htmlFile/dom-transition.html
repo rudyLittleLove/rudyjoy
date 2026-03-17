@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>删除列表中一个DOM，其余DOM动态过渡的方法</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>删除列表中一个DOM，其余DOM动态过渡的方法</h3><ul><li><a href="#_1">效果图</a></li><li><a href="#DEMO_3">效果DEMO</a></li><li><a href="#_6">全部代码</a></li><li><a href="#_90">方法原理解释</a></li><li><a href="#_103">结语</a></li></ul></div><p></p>
+<h1><a id="_1"></a>效果图</h1>
+<p><img src="https://img-blog.csdnimg.cn/20200606131905395.gif" alt="在这里插入图片描述"></p>
+<h1><a id="DEMO_3"></a>效果DEMO</h1>
+<p><a href="http://jsrun.net/ru2Kp">简易的DOM 过渡效果</a></p>
+<h1><a id="_6"></a>全部代码</h1>
+<p>HTML</p>
+<pre><code class="prism language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>ul</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>box<span class="token punctuation">"</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>box<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>li</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>rect<span class="token punctuation">"</span></span> <span class="token attr-name">data-index</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>01<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>01<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>li</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>li</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>rect<span class="token punctuation">"</span></span> <span class="token attr-name">data-index</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>02<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>02<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>li</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>li</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>rect<span class="token punctuation">"</span></span> <span class="token attr-name">data-index</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>03<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>03<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>li</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>li</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>rect<span class="token punctuation">"</span></span> <span class="token attr-name">data-index</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>04<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>04<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>li</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>li</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>rect<span class="token punctuation">"</span></span> <span class="token attr-name">data-index</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>05<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>05<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>li</span><span class="token punctuation">&gt;</span></span>
+    <span class="token comment">&lt;!-- 一共36个为了减少篇幅只写几个个 --&gt;</span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>ul</span><span class="token punctuation">&gt;</span></span>
+</code></pre>
+<p>CSS</p>
+<pre><code class="prism language-css"><span class="token selector">.box</span> <span class="token punctuation">{</span>
+    <span class="token property">width</span><span class="token punctuation">:</span> 336px<span class="token punctuation">;</span>
+    <span class="token property">height</span><span class="token punctuation">:</span> 336px<span class="token punctuation">;</span>
+    <span class="token property">box-shadow</span><span class="token punctuation">:</span> 0 0 3px pink<span class="token punctuation">;</span>
+    <span class="token property">list-style</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+    <span class="token property">padding</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">.rect</span> <span class="token punctuation">{</span>
+    <span class="token property">width</span><span class="token punctuation">:</span> 50px<span class="token punctuation">;</span>
+    <span class="token property">height</span><span class="token punctuation">:</span> 50px<span class="token punctuation">;</span>
+    <span class="token property">box-shadow</span><span class="token punctuation">:</span> 0 0 3px orange inset<span class="token punctuation">;</span>
+    <span class="token property">margin</span><span class="token punctuation">:</span> 3px<span class="token punctuation">;</span>
+    <span class="token property">float</span><span class="token punctuation">:</span> left<span class="token punctuation">;</span>
+    <span class="token property">cursor</span><span class="token punctuation">:</span> pointer<span class="token punctuation">;</span>
+    <span class="token property">line-height</span><span class="token punctuation">:</span> 50px<span class="token punctuation">;</span>
+    <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>JavaScript</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> rectArr <span class="token operator">=</span> Array<span class="token punctuation">.</span><span class="token keyword">from</span><span class="token punctuation">(</span>document<span class="token punctuation">.</span><span class="token function">getElementsByClassName</span><span class="token punctuation">(</span><span class="token string">'rect'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> box <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">'box'</span><span class="token punctuation">)</span>
+<span class="token keyword">var</span> delay <span class="token operator">=</span> <span class="token number">300</span>
+box<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'click'</span><span class="token punctuation">,</span> <span class="token keyword">function</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">{</span>
+	<span class="token comment">// 如果点击的box本身就不往下执行</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>target <span class="token operator">===</span> box<span class="token punctuation">)</span> <span class="token keyword">return</span>
+	
+	<span class="token comment">// 获取当前dom index, 当然你也可以不通过data-index 保存的方式获取，不过下面的方法就要稍微调整一下</span>
+    <span class="token keyword">let</span> index <span class="token operator">=</span> e<span class="token punctuation">.</span>target<span class="token punctuation">.</span><span class="token function">getAttribute</span><span class="token punctuation">(</span><span class="token string">'data-index'</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 取出要移动的DOM</span>
+    <span class="token keyword">var</span> moveArr <span class="token operator">=</span> rectArr<span class="token punctuation">.</span><span class="token function">splice</span><span class="token punctuation">(</span>index<span class="token punctuation">,</span> rectArr<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+
+    <span class="token comment">// 保存要移动的DOM 未移动前的位置</span>
+    moveArr<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>item <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+        item<span class="token punctuation">.</span>preLeft <span class="token operator">=</span> item<span class="token punctuation">.</span>offsetLeft
+        item<span class="token punctuation">.</span>preTop <span class="token operator">=</span> item<span class="token punctuation">.</span>offsetTop
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 删除dom 删除后后续DOM 位置立即变化</span>
+    box<span class="token punctuation">.</span><span class="token function">removeChild</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>target<span class="token punctuation">)</span>
+
+	<span class="token comment">// 给移动后的DOM 位移置之前的位置</span>
+    moveArr<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>item <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+        item<span class="token punctuation">.</span>style<span class="token punctuation">.</span>transform <span class="token operator">=</span> <span class="token template-string"><span class="token string">`translate(</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>item<span class="token punctuation">.</span>preLeft <span class="token operator">-</span> item<span class="token punctuation">.</span>offsetLeft<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">px,</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>item<span class="token punctuation">.</span>preTop <span class="token operator">-</span> item<span class="token punctuation">.</span>offsetTop<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">px)`</span></span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+	
+	<span class="token comment">// 设置一点延迟给DOM 渲染反应时间，如果不设置自行试试会出现什么问题吧</span>
+	<span class="token comment">// 添加过渡，并位移回dom 新位置</span>
+    <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+        moveArr<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>item <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+            item<span class="token punctuation">.</span>style<span class="token punctuation">.</span>transition <span class="token operator">=</span> <span class="token template-string"><span class="token string">`transform </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>delay<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">ms ease`</span></span>
+            item<span class="token punctuation">.</span>style<span class="token punctuation">.</span>transform <span class="token operator">=</span> <span class="token template-string"><span class="token string">`translate(0, 0)`</span></span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 位移完 删除过渡以及位移参数， 删除了下次才能正常位移</span>
+    <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+      moveArr<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>item <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+        item<span class="token punctuation">.</span>style<span class="token punctuation">.</span>transition <span class="token operator">=</span> <span class="token template-string"><span class="token string">``</span></span>
+        item<span class="token punctuation">.</span>style<span class="token punctuation">.</span>transform <span class="token operator">=</span> <span class="token string">''</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>  
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> delay <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 前面通过 splice 删除掉了原有数组中将要移动的 dom，现在还原。</span>
+    <span class="token comment">// 有个问题就是虽然删除了DOM，但是还保存再来数组中，每次循环计算都是以36的数量计算</span>
+    rectArr <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token operator">...</span>rectArr<span class="token punctuation">,</span> <span class="token operator">...</span>moveArr<span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<h1><a id="_90"></a>方法原理解释</h1>
+<p>删除DOM 后，后续DOM 立马出现在新的位置不会出现过渡，因此我们手动加过渡。</p>
+<p>1  删除之前保存好未移动之前的位置</p>
+<p>2 删除之后把位置重新赋值给移动的元素（这里通过位移的方式，简单计算一下就行）</p>
+<p>3 赋值完成后 再 添加过渡属性 以及重新赋值 位移（因为只有这里添加了过渡属性，所以这个位移才会过渡，其他的看不出效果）</p>
+<p>4 位移完成删除过渡属性</p>
+<p><strong>所以结论就是，其实这里过渡就是，从当前位置移动到目标位置（没过渡效果），再从目标位置移回来（没过渡效果），最后再移回目标位置（有过渡效果，就是页面中看到的效果）。</strong></p>
+<h1><a id="_103"></a>结语</h1>
+<p>发这篇文章的起因其实是在 <a href="https://stackoverflow.com/questions/62143275/css-transition-when-moved/62143739#62143739">Stack Overflow</a> 上面回答别人的问题，说实话，我比较常用 Vue 。而它里面有过渡组件，也有<a href="https://cn.vuejs.org/v2/guide/transitions.html#%E5%88%97%E8%A1%A8%E7%9A%84%E6%8E%92%E5%BA%8F%E8%BF%87%E6%B8%A1">例子</a>，基本上不需要我考虑具体的过渡实现，看到这个同行问的问题，并且他要原生代码写的，刚开始我通过审查元素的方式查看DOM 是如果变化的，最后找了一个例子，扒了一下源码才发现具体的实现方式，也总算知道为啥我审查元素打断点看不到了，因为他前两个位移没过渡，最后一个位移才有，而打断点只能看到最后一个。基本上这种操作的过渡都是这种思路，希望大家能够很好的理解，好了就这样啦。</p>
+<p>以上信息如有疏漏或错误，欢迎指正</p>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,278 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JavaScript 数组高性能去重 千万级数据去重效率测试 高效去重详解</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>JavaScript 数组高性能去重 千万级数据去重效率测试 高效去重详解</h3><ul><li><a href="#_1">引言</a></li><li><a href="#_3">测试前提</a></li><li><a href="#_7">测试准备</a></li><li><a href="#_35">测试效率</a></li><ul><li><a href="#1for__splice__flag_36">1.双重for循环 + splice / flag</a></li><li><a href="#2for__indexOf__includes_97">2.for 循环加 indexOf / includes</a></li><li><a href="#3filter__indexOf_123">3.filter 加 indexOf</a></li><li><a href="#4sort_144">4.使用sort排序后去重</a></li><li><a href="#5sort__reduce_168">5.sort 加 reduce</a></li><li><a href="#6keyhasOwnProperty_193">6.利用对象key唯一(hasOwnProperty)</a></li><li><a href="#7Map_224">7.使用Map数据结构</a></li><li><a href="#8Set_250">8.使用Set</a></li></ul><li><a href="#_268">总结推荐</a></li><li><a href="#_271">循环效率排行</a></li><li><a href="#_296">结语</a></li></ul></div><p></p>
+<h1><a id="_1"></a>引言</h1>
+<p>  网上能搜出一堆关于数据去重的例子，以及测试效率耗时都不尽相同。然而却没给出必要的解释，为什么不同人测试出来的效率不一样呢？本文就详细通过大量测试探索一下，去重效率损耗主要在哪儿？不一样的数据为什么用不同去重方案测试效率耗时不一样?给千万级的数据去重该选用哪种去重方法?</p>
+<h1><a id="_3"></a>测试前提</h1>
+<p>1.测试工具 <code>chrome浏览器</code><br>
+2.测试电脑配置 <code>小米笔记本</code> <code>i7-8500U</code> <code>16GB</code><br>
+3.系统 <code>windows10</code> <code>64位</code></p>
+<h1><a id="_7"></a>测试准备</h1>
+<p>  分别创建一个1万、10万、100万、1000万的简单数据，这里我们不取随机数，创建固定重复的量的数据（分别重复20%，50%，80%）。并使重复数据平均分布，测试各种常用去重方法效率。</p>
+<pre><code class="prism language-javascript"><span class="token comment">// distinctTest.js</span>
+<span class="token keyword">var</span> myriad <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token comment">// 代码就写一个1万的例子，避免篇幅过长。</span>
+<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span>item <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  myriad<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>Array<span class="token punctuation">.</span><span class="token keyword">from</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Array</span><span class="token punctuation">(</span><span class="token number">10000</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span>item2<span class="token punctuation">,</span> i<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> i <span class="token operator">%</span> <span class="token number">10</span> <span class="token operator">&lt;</span> item <span class="token operator">||</span> Math<span class="token punctuation">.</span><span class="token function">random</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token comment">// 可在此处添加十万、百万.. 数据</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token keyword">function</span> <span class="token function">distinct</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token comment">// 此处为去重代码</span>
+  <span class="token keyword">return</span> arr<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+myriad<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>item <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> length <span class="token operator">=</span> item<span class="token punctuation">.</span>length<span class="token punctuation">;</span>
+  console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`数据长度：</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>item<span class="token punctuation">.</span>length<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">)</span>
+  console<span class="token punctuation">.</span><span class="token function">time</span><span class="token punctuation">(</span><span class="token string">"耗时"</span><span class="token punctuation">)</span>
+  <span class="token keyword">var</span> newArr <span class="token operator">=</span> <span class="token function">distinct</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span>
+  console<span class="token punctuation">.</span><span class="token function">timeEnd</span><span class="token punctuation">(</span><span class="token string">"耗时"</span><span class="token punctuation">)</span>
+  console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`数据重复量：</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>length <span class="token operator">-</span> newArr<span class="token punctuation">.</span>length<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">)</span>
+  console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'————————————————————————————————————————————'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<h1><a id="_35"></a>测试效率</h1>
+<h2><a id="1for__splice__flag_36"></a>1.双重for循环 + splice / flag</h2>
+<p><strong>方法解释：</strong><br>
+  第一种在元素重复时删除重复的元素，剩余的元素就是去重后的数据。<code>splice</code>会改变原数组，如果不想更改，可以用<code>concat</code>复制一份，如：<code>var newArr = arr.concat()</code>不传入数据相当于复刻一份。<br>
+  第二种就是用flag标记，新数组中存在相同数据就不往新数组插入当前数据。<br>
+<strong>去重代码：</strong></p>
+<pre><code class="prism language-javascript"><span class="token comment">// 使用splice删除</span>
+<span class="token keyword">function</span> <span class="token function">distinct</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">var</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> len <span class="token operator">=</span> arr<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> len<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">var</span> i2 <span class="token operator">=</span> i <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span> i2 <span class="token operator">&lt;</span> len<span class="token punctuation">;</span> i2<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">===</span> arr<span class="token punctuation">[</span>i2<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> 
+        arr<span class="token punctuation">.</span><span class="token function">splice</span><span class="token punctuation">(</span>i2<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 删除重复的数据</span>
+        i2<span class="token operator">--</span><span class="token punctuation">;</span> <span class="token comment">// 删除数据后index需要前移一位</span>
+        len <span class="token operator">=</span> arr<span class="token punctuation">.</span>length<span class="token punctuation">;</span> <span class="token comment">// 删除数据后重新获取数组长度</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">return</span> arr<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 使用flag标记</span>
+<span class="token keyword">function</span> <span class="token function">distinct</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> newArr <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">var</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> len <span class="token operator">=</span> arr<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> len<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> flag <span class="token operator">=</span> <span class="token boolean">true</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">var</span> i2 <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i2 <span class="token operator">&lt;</span> newArr<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i2<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">===</span> newArr<span class="token punctuation">[</span>i2<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> 
+        flag <span class="token operator">=</span> <span class="token boolean">false</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    flag <span class="token operator">&amp;&amp;</span> newArr<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">return</span> newArr<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+</code></pre>
+<p><strong>测试结果：</strong><br>
+<code>splice</code><br>
+<img src="https://img-blog.csdnimg.cn/20200113220331372.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+<code>flag</code></p>
+<pre><code class="prism language-bash"><span class="token variable"><span class="token variable">`</span>数据长度：10000<span class="token variable">`</span></span>			 <span class="token operator">|</span> <span class="token variable"><span class="token variable">`</span>数据长度：100000<span class="token variable">`</span></span>		 	<span class="token operator">|</span> <span class="token variable"><span class="token variable">`</span>数据长度：1000000<span class="token variable">`</span></span>
+数据重复量：1999 			 <span class="token operator">|</span> 数据重复量：19999 			<span class="token operator">|</span> 页面崩溃
+耗时: 98.783935546875ms		 <span class="token operator">|</span> 耗时: 9475.10009765625ms 	<span class="token operator">|</span> 
+——————————————————————————	 <span class="token operator">|</span> —————————————————————————— 	<span class="token operator">|</span>
+数据重复量：4999 			 <span class="token operator">|</span> 数据重复量：49999 			<span class="token operator">|</span>
+耗时: 46.31298828125ms		 <span class="token operator">|</span> 耗时: 3659.33984375ms		<span class="token operator">|</span> 
+——————————————————————————	 <span class="token operator">|</span> ——————————————-———————————	<span class="token operator">|</span> 
+数据重复量：7999 			 <span class="token operator">|</span> 数据重复量：79999 			<span class="token operator">|</span> 
+耗时: 7.68310546875ms		 <span class="token operator">|</span> 耗时: 587.00927734375ms		<span class="token operator">|</span> 
+</code></pre>
+<p><strong>结果描述：</strong><br>
+  双重循环去重，使用<code>splice</code>，会更改原来数组数据，在数据不到1万时，处理效率还可接受。达到10万时需要10多秒，达到100万页面直接崩溃。使用<code>flag</code>判断稍快于上方，而且重复数据越多，耗时差异越大。</p>
+<p><strong>方法效率分析：</strong><br>
+  <strong>1</strong>.<code>splice</code>删除数据元素，100万条数据都删除，耗时在8秒（8000ms）左右，波动幅度较大，根据重复量多少，效率损耗有明显差异。<br>
+  <strong>2</strong>. 1万条平均分布的数据，重复20%，需要循环<strong>3千多万次</strong>，重复50%，需要循环<strong>1千多万次</strong>，重复80%，需要循环<strong>2百多万次</strong>。而十万条数据在此之上<strong>翻了100倍</strong>，从以上1万数据与10万数据耗时也能看出，时长比超过<strong>100倍</strong>。因循环次数的急剧增多，耗时也100倍增长。</p>
+<h2><a id="2for__indexOf__includes_97"></a>2.for 循环加 indexOf / includes</h2>
+<p><strong>方法解释：</strong><br>
+  此方法通过判断新数组中是否存在<strong>当前循环到的元素</strong>，如果没有就把<strong>当前循环到的元素</strong>插入新数组。</p>
+<p><strong>去重代码：</strong></p>
+<pre><code class="prism language-javascript"><span class="token keyword">function</span> <span class="token function">distinct</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> newArray <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> len <span class="token operator">=</span> arr<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> len<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    newArray<span class="token punctuation">.</span><span class="token function">indexOf</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">===</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token operator">&amp;&amp;</span> newArray<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token comment">// !newArray.includes(arr[i]) &amp;&amp; newArray.push(arr[i])</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">return</span> newArray<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>测试结果：</strong><br>
+<img src="https://img-blog.csdnimg.cn/20200113220349669.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+<strong>结果描述：</strong><br>
+  <code>for</code> 也可以替换为 <code>for of</code>，虽然<code>for of</code>循环比<code>for</code>慢，但是<code>for of</code>直接返回元素本身，而不需要通过下标取数组数据，<code>for in</code>就不需要考虑了，同样返回下标，却比<code>for</code>慢了将近1万倍。不过<code>for in</code>可以遍历对象，这是其他循环比不了的。</p>
+<p>  处理1万以内数据效率很高，10万条时，就需要几秒了。百万页面虽未直接崩溃，等待几分钟还未出结果，不过比上面双重循环效率高。<code>indexOf</code>与<code>includes</code>效率相同，只是返回值不一样。考虑到<code>indexOf</code>兼容性强于<code>includes</code>，推荐使用<code>indexOf</code>，当然写法上<code>includes</code>更加简洁。<strong>其实这种方法和上方的双重循环是一样的</strong>，因为<code>indexOf</code>和<code>includes</code>都是内部循环从数据下标0处开始循环查询，<strong>数据越靠数组后方，查询耗时越长</strong>，因为循环次数越多。</p>
+<p><strong>方法效率分析：</strong><br>
+  <strong>1</strong>.经测试，<code>indexOf</code>和<code>includes</code>效率比的<code>for</code>循环判断值快了一倍左右，所以虽然实际上都是双重循环，但是整体效率高于双重<code>for</code>循环。<br>
+  <strong>2</strong>.即使在千万级的数据下循环加<code>push</code>耗时也不多，<strong>2千万次</strong>循环加<code>push</code>耗时不超过200毫秒。<br>
+  <strong>3</strong>.主要耗时还是在<code>indexOf</code>与<code>includes</code>判断数据是否重复这一点上，千万级的数据，如果要判断数据是否重复，不重复的数据要从头循环到尾，耗时非常明显。重复数据越少，耗时越多。</p>
+<h2><a id="3filter__indexOf_123"></a>3.filter 加 indexOf</h2>
+<p><strong>方法解释：</strong><br>
+  通过<code>indexOf</code>判断此元素第一次出现的位置与当前的元素的<code>index</code>是否相同来去重。</p>
+<p><strong>去重代码：</strong></p>
+<pre><code class="prism language-javascript"><span class="token keyword">function</span> <span class="token function">distinct</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> arr<span class="token punctuation">.</span><span class="token function">filter</span><span class="token punctuation">(</span><span class="token punctuation">(</span>item<span class="token punctuation">,</span> i<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> arr<span class="token punctuation">.</span><span class="token function">indexOf</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span> <span class="token operator">===</span> i
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>测试结果：</strong><br>
+<img src="https://img-blog.csdnimg.cn/20200113220423323.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+<strong>结果描述：</strong><br>
+  在效率稍上低于<code>for</code>加<code>indexOf</code>的方法，数据量重复较少的情况与<code>for</code>	加<code>indexOf</code>处理效率上差不多，但数据量多的时候效率就有了明显的差别，同样在千万级的数据下无法处理。</p>
+<p><strong>方法效率分析：</strong><br>
+  <strong>1</strong>.此方法本质上与上述两种一样，都是双重循环，同样使用了<code>indexOf</code>，主要的效率损耗就在个上面。<br>
+  <strong>2</strong>.经测试<code>filter</code>都返回<code>false</code>比都返回<code>true</code>要快，也就是<strong>重复越多越快</strong>，这就引起我们猜想，返回<code>true</code>类似于<code>push</code>了新数据到新数组。<br>
+  <strong>3</strong>.重复量越大，与<code>for</code>加<code>indexOf</code>去重差距就越明显，数组<code>filter</code>方法效率明显要低于<code>for</code>循环（最后有纯粹的循环效率耗时对比）。</p>
+<h2><a id="4sort_144"></a>4.使用sort排序后去重</h2>
+<p><strong>方法解释：</strong><br>
+  利用<code>sort</code>排序，使相同元素相邻排列，通过判断<strong>当前</strong>下标与<strong>前一个</strong>下标元素是否相同从而插入新数据。我见过有人用<strong>当前</strong>下标与<strong>下一个</strong>下标元素判断，但是那种方法最后一个元素是<code>undefined</code>时，会造成<code>undefined</code>无法被判断为不重复的元素，要解决这个问题就会造成多的判断，以至于效率下降。<code>sort</code>排序会更改原数组，如果不想更改可以用<code>concat()</code>拷贝一份，如：<code>var newArr = arr.concat()</code>原为数组拼接，不传入数据相当于复刻一份。</p>
+<p><strong>去重代码：</strong></p>
+<pre><code class="prism language-javascript"><span class="token keyword">function</span> <span class="token function">distinct</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  arr<span class="token punctuation">.</span><span class="token function">sort</span><span class="token punctuation">(</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> b<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> a <span class="token operator">-</span> b<span class="token punctuation">)</span>
+  <span class="token keyword">var</span> arrry <span class="token operator">=</span> <span class="token punctuation">[</span>arr<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">var</span> i <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">,</span> len <span class="token operator">=</span> arr<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> len<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">!==</span> arr<span class="token punctuation">[</span>i <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      arrry<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">return</span> arrry<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>测试结果：</strong><br>
+<img src="https://img-blog.csdnimg.cn/20200113220436766.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+<strong>结果描述：</strong><br>
+  使用<code>sort</code>排序后去重效率有了显著的提升，数据1百万也能在1秒内处理完。即使1千万也能勉强处理。不过当前配置电脑处理超过2千万的数据，会进入断点提示<strong>Paused before potential out-of-memory crash（在潜在的内存不足崩溃之前暂停）</strong>。在去重<strong>数值</strong>类型数据上<code>sort</code>排序去重效率有很大提升。<br>
+<strong>方法效率分析：</strong><br>
+  <strong>1</strong>.利用了<code>sort</code>排序，主要计算时间就在排序上。如果是顺序的数值类型数组，在<code>sort</code>排序上所需时间就极少，经测试，这种数据即使1千万条、重复20%，也能在1秒内处理完。<br>
+  <strong>2</strong>. 这种方法也能去重其他类型数据，只需要把<code>sort</code>排序传入的<strong>函数</strong>去掉就行。不过在数据处理的效率上就比较差了，10万数据时就已经接近1秒钟了，100万也只能勉强处理，千万就需要用<strong>分钟</strong>计算了。</p>
+<h2><a id="5sort__reduce_168"></a>5.sort 加 reduce</h2>
+<p><strong>方法解释：</strong><br>
+  使用<code>sort</code>排序后，利用<code>reduce</code>特性，对比新数组<strong>最后一个元素</strong>与循环到的<strong>当前元素</strong>是否相等，不相等就插入数据。</p>
+<p><strong>去重代码：</strong></p>
+<pre><code class="prism language-javascript"><span class="token keyword">function</span> <span class="token function">distinct</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  arr<span class="token punctuation">.</span><span class="token function">sort</span><span class="token punctuation">(</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> b<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> a <span class="token operator">-</span> b<span class="token punctuation">)</span>
+  <span class="token keyword">return</span> arr<span class="token punctuation">.</span><span class="token function">reduce</span><span class="token punctuation">(</span><span class="token punctuation">(</span>newArr<span class="token punctuation">,</span> current<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>newArr<span class="token punctuation">[</span>newArr<span class="token punctuation">.</span>length <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">!==</span> current<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      newArr<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>current<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> newArr<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>arr<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>测试结果：</strong><br>
+<img src="https://img-blog.csdnimg.cn/20200113220456671.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+<strong>结果描述：</strong><br>
+  此方法与上面一种方法效率相似，数据较小时（10万以内），差异并不大，数据较大时能看出差异。同样当前配置电脑处理超过2千万的数据，会进入断点提示<strong>Paused before potential out-of-memory crash（在潜在的内存不足崩溃之前暂停）</strong>。</p>
+<p><strong>方法效率分析：</strong><br>
+  <strong>1</strong>.与上一个方法一样利用了<code>sort</code>排序，主要计算时间就在排序上。<br>
+  <strong>2</strong>.此方法与上面相比差异不大，虽然<code>reduce</code>循环比<code>for</code>循环慢（后面有纯粹循环耗时排行），但在取值对比上面稍快。</p>
+<h2><a id="6keyhasOwnProperty_193"></a>6.利用对象key唯一(hasOwnProperty)</h2>
+<p><strong>方法解释：</strong><br>
+  对象key具有唯一性，通过给对象key赋值、取值判断元素是否重复，不重复就<code>push</code>数据到新数组，重复就跳过。</p>
+<p><strong>去重代码：</strong></p>
+<pre><code class="prism language-javascript"><span class="token keyword">function</span> <span class="token function">distinct</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> newArrry <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> obj <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">var</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> len <span class="token operator">=</span> arr<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> len<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>obj<span class="token punctuation">[</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">!==</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">// obj.hasOwnProperty(arr[i]) 也可以</span>
+      newArrry<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+      obj<span class="token punctuation">[</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">1</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">return</span> newArrry<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>测试结果：</strong><br>
+<img src="https://img-blog.csdnimg.cn/20200113220530894.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<p><strong>结果描述：</strong><br>
+  此方法计算速度还不错，与<code>sort</code>排序后去重效率相当，同样是超过2千万数据后会进入断点（同上）。不过对象属性不重复有比较大的问题就是<br>
+  1.<code>true</code> 和<code>"true"</code>在设为对象key时，值是一样的。（解决方法 使用 <code>typeof</code>+<code>key</code>）<br>
+  2.无法设置复杂类型数据为key，结果key只能为<code>[object Object]</code>（解决方法 使用 <code>typeof</code>+<code>toString</code>）<br>
+处理的方法过多会造成效率的下降，因此不再此方法上多下功夫，如果数据类型明确，也可以使用这种方法。</p>
+<p><strong>方法效率分析：</strong><br>
+  <strong>1</strong>.对象属性的存取需要消耗比较多的时间(利用<code>hasOwnProperty</code>判断属性是否存在效率也是一样)。<br>
+  <strong>2</strong>.剩余少部分时间消耗在循环和<code>push</code>数据上。<br>
+  <strong>3</strong>.数据是短字符串的情况下，此方法效率还能提升<strong>5倍</strong>左右。</p>
+<h2><a id="7Map_224"></a>7.使用Map数据结构</h2>
+<p><strong>方法解释：</strong><br>
+  与对象<code>key</code>唯一去重方法一致，也是通过<code>get</code>、<code>set</code>数据判断元素是否重复，也可以使用<code>has</code>判断。</p>
+<p><strong>去重代码：</strong></p>
+<pre><code class="prism language-javascript"><span class="token keyword">function</span> <span class="token function">distinct</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> newArray <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> newMap <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> len <span class="token operator">=</span> arr<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> len<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>newMap<span class="token punctuation">.</span><span class="token keyword">get</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">// newMap.has(arr[i])</span>
+      newMap<span class="token punctuation">.</span><span class="token keyword">set</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      newArray<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">return</span> newArray<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>测试结果：</strong><br>
+<img src="https://img-blog.csdnimg.cn/20200113220547686.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+<strong>结果描述：</strong><br>
+  利用Map数据结构不重复，处理效率还不错，目前效率最高的一种去重方案，不会打乱数据，不会因数据类型问题不好处理。目前只测试到1千万数据，2千万开始本机配置极易进入断点（同上）</p>
+<p><strong>方法效率分析：</strong><br>
+  <strong>1</strong>.此方法时间也主要损耗在<code>Map</code>数据的存与取上面，不过效率比对象存取要高。</p>
+<h2><a id="8Set_250"></a>8.使用Set</h2>
+<p><strong>方法解释：</strong><br>
+  最简单的方法，通过<code>new</code> 一个 <code>Set</code>对象（只能存不同数据），放入重复数据的数组，再解构出来。</p>
+<p><strong>去重代码：</strong></p>
+<pre><code class="prism language-javascript"><span class="token keyword">function</span> <span class="token function">distinct</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> <span class="token punctuation">[</span><span class="token operator">...</span><span class="token keyword">new</span> <span class="token class-name">Set</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>测试结果：</strong><br>
+<img src="https://img-blog.csdnimg.cn/2020011322060891.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3J1ZHlfemhvdQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+<strong>结果描述：</strong><br>
+  <code>es6</code> 提供的<code>Set</code>使用方法最简单，达到的效果也很喜人，目前效率与利用<code>Map</code>去重效率相当，不过考虑到<code>Set</code>兼容性，只能兼容到<code>IE11</code>，并且<code>IE11</code>不支持<code>Array.from</code>，以及解构。在不考虑IE兼容的情况下推荐使用<code>Set</code>。</p>
+<p><strong>方法效率分析：</strong><br>
+  <code>Set</code>去重方法，全部由<code>Set</code>数据结构不重复特性处理，没有具体耗时地方，整个方法就是耗时处。</p>
+<h1><a id="_268"></a>总结推荐</h1>
+<p>  <strong>1.首先在不考虑IE兼容的情况下推荐使用<code>Set</code>去重</strong>，可以看到每个去重方法具体效率都跟数据量、重复量相关。当然有的也跟数据类型相关，比如使用<code>sort</code>排序去重，<strong>2.如果是有序的数值，<code>sort</code>排序去重无疑是最快的</strong>，兼容性也很好。如果能确定需要<strong>3.去重的数据类型是简单字符串，推荐使用对象key唯一去重</strong>，经测试，在数据是短字符串的情况下，对象key唯一的去重方式在效率上还能提升<strong>5倍</strong>以上。如果数据类型比较复杂，而又不需要兼容IE10以下，<strong>4.推荐使用<code>Map</code>数据唯一去重</strong>。以上所有测试结果都能看到，重复量越大，处理速度越快，反而重复得越少，需要处理的时间就越长。选择去重方案也需要考虑当前项目中是否有使用<code>babel</code>工具，即使用了兼容性不好的<code>Set</code>、<code>Map</code>方法，<code>babel</code>也会打包为<code>ES5</code>语法。然而并不知道具体会打包成怎样去重，所以上诉方法都请视项目情况使用。</p>
+<h1><a id="_271"></a>循环效率排行</h1>
+<p>  只论循环效率，不考虑内容，看看循环具体排行如何。</p>
+<pre><code class="prism language-bash">var arr <span class="token operator">=</span> Array.from<span class="token punctuation">(</span>new Array<span class="token punctuation">(</span>10000000<span class="token punctuation">))</span><span class="token punctuation">;</span> // 创建1千万条数据的数组
+
+console.time<span class="token punctuation">(</span><span class="token string">'耗时'</span><span class="token punctuation">)</span>
+// 循环体
+console.timeEnd<span class="token punctuation">(</span><span class="token string">'耗时'</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> 		// 耗时: 6.65283203125ms - 7.085205078125ms
+<span class="token keyword">while</span> 		// 耗时：19.105712890625ms - 19.453857421875ms
+<span class="token keyword">do</span> <span class="token keyword">while</span>	// 耗时：18.89697265625ms - 19.087890625ms
+<span class="token keyword">for</span> of 		// 耗时：102.4921875ms - 103.44921875ms
+forEach<span class="token punctuation">(</span><span class="token punctuation">)</span> 	// 耗时：103.834228515625ms - 104.614990234375ms
+filter<span class="token punctuation">(</span><span class="token punctuation">)</span>    // 耗时：109.2978515625ms - 114.50390625ms
+reduce<span class="token punctuation">(</span><span class="token punctuation">)</span> 	// 耗时：113.99609375ms - 116.65625ms
+map<span class="token punctuation">(</span><span class="token punctuation">)</span> 		// 耗时：140.9560546875ms - 143.347900390625ms
+<span class="token keyword">for</span> <span class="token keyword">in</span> 		// 耗时：2094.56201171875ms - 2811.3017578125ms
+
+</code></pre>
+<p>数组的方法还有很多就不一一列出来了<br>
+可以去此处参考数组对象方法<br>
+<a href="https://www.runoob.com/jsref/jsref-obj-array.html">Array 对象</a></p>
+<h1><a id="_296"></a>结语</h1>
+<p>  说实话，网上虽说<code>js</code>去重方法一大堆，但是不管怎么拼凑其实就那几种类型。也见过用<code>递归</code>方式去重的方法，不过效率实在太差，数据量稍微大一点就报错。以上所有数据与测试皆是本人实测，在不同电脑、系统、浏览器上会有明显差异。</p>
+<p>看在花了大量时间测试的情况下，可以点个赞哦，如果错误欢迎指出。</p>
+</div>
+</body>
+
+</html>

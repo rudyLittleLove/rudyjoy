@@ -1,0 +1,104 @@
+.node-box {
+  display: flex;
+  position: relative;
+  // 增大拖拽触发区域
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -10px;
+    height: 10px;
+  }
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -10px;
+    height: 10px;
+  }
+  :global {
+    .el-dropdown {
+      .el-popper {
+        // top: 36px!important;
+      }
+    }
+    .el-input__validateIcon {
+      display: none;
+    }
+    .el-select {
+      &.index-select {
+        z-index: 1;
+        width: 78px;
+        height: 32px;
+        &.And {
+          .el-select__wrapper {
+            background-color: #5ccc81;
+            &.is-focused {
+              --cs-shadow4-color: #5ccc81;
+            }
+          }
+        }
+        .el-select__wrapper {
+          border: none;
+          background-color: #697dff;
+          &.is-focused {
+            --cs-shadow4-color: #697dff;
+          }
+          .el-select__placeholder,
+          .el-select__caret {
+            color: #ffffff;
+          }
+        }
+      }
+    }
+
+    .el-form {
+      // padding-left: 42px;
+    }
+  }
+  &.rule-group {
+    background: useThemeVar(module_bg1);
+    border-radius: 4px;
+    border: 1px solid useThemeVar(border2);
+    padding: 8px 12px;
+    // margin-top: -8px;
+    transform: translateY(-8px);
+    :global {
+    }
+  }
+}
+
+.index-select-popper {
+  &[data-popper-placement='bottom-start'] {
+    margin-top: -8px;
+  }
+  &[data-popper-placement='top-start'] {
+    margin-bottom: -8px;
+  }
+}
+
+.operation-popper {
+  box-sizing: border-box;
+  min-width: 22px !important;
+  padding: 4px 5px !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  :global {
+    .copy-icon,
+    .remove-icon {
+      margin-left: 11px;
+    }
+  }
+}
+
+.dorpdown-popper {
+  &[data-popper-placement='right-start'] {
+    margin-left: -2px !important;
+  }
+  &[data-popper-placement='left-start'] {
+    margin-right: -2px !important;
+  }
+}

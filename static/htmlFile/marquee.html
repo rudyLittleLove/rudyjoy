@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>只需一个DOM，纯CSS实现线性跑马灯特效</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>只需一个DOM，纯CSS实现跑马灯线性特效</h3><ul><li><a href="#_1">引言</a></li><li><a href="#Demo_4">跑马灯效果图&amp;Demo</a></li><li><a href="#_8">跑马灯代码</a></li><li><a href="#_66">样式分析解释</a></li></ul></div><p></p>
+<h1><a id="_1"></a>引言</h1>
+<p>之前看到一个效果，一条小细线，围绕着边框一直绕圈，不过它的实现方式使用了JavaScript。于是就尝试着写了一个只需要CSS就能围绕边框跑的效果，废话不多说，直接上效果图和代码。</p>
+<h1><a id="Demo_4"></a>跑马灯效果图&amp;Demo</h1>
+<p><a href="http://jsrun.net/PEfKp"><img src="https://img-blog.csdnimg.cn/20200328112829123.gif" alt="在这里插入图片描述"></a><br>
+很简洁的一个效果</p>
+<h1><a id="_8"></a>跑马灯代码</h1>
+<p><strong>HTML</strong></p>
+<pre><code class="prism language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>box marquee-line<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>我是跑马灯啊^_^，点击我也可以查看Demo哦<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+</code></pre>
+<p><strong>CSS</strong></p>
+<pre><code class="prism language-css"><span class="token atrule"><span class="token rule">@keyframes</span> moveLine</span> <span class="token punctuation">{</span>
+  <span class="token selector">0%</span> <span class="token punctuation">{</span>
+    <span class="token property">background-position</span><span class="token punctuation">:</span> -100px 1px, <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span> -100px, <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span>, 1px 0px<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token selector">5%</span> <span class="token punctuation">{</span>
+    <span class="token property">background-position</span><span class="token punctuation">:</span> 0px 1px, <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span> -100px, <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span>, 1px -100px<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token selector">30%</span> <span class="token punctuation">{</span>
+    <span class="token property">background-position</span><span class="token punctuation">:</span> 100% 1px, <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span> -100px, <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span>, 1px -100px<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token selector">35%</span> <span class="token punctuation">{</span>
+    <span class="token property">background-position</span><span class="token punctuation">:</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span> 1px, <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span> 0px, <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span>, 1px -100px<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token selector">50%</span> <span class="token punctuation">{</span>
+    <span class="token property">background-position</span><span class="token punctuation">:</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span> 1px, <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span> 100%, <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span>, -100px -100px<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token selector">55%</span> <span class="token punctuation">{</span>
+    <span class="token property">background-position</span><span class="token punctuation">:</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span> 1px, <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span>, 100% <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span>, -100px <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token selector">80%</span> <span class="token punctuation">{</span>
+    <span class="token property">background-position</span><span class="token punctuation">:</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span> 1px, <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span>, 0px <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span>, 1px <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token selector">85%</span> <span class="token punctuation">{</span>
+    <span class="token property">background-position</span><span class="token punctuation">:</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span> 1px, <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span>, -100px <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span>, 1px 100%<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token selector">100%</span> <span class="token punctuation">{</span>
+    <span class="token property">background-position</span><span class="token punctuation">:</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span> 1px, <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span>, -100px <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span>, 1px 0px<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector">.marquee-line</span> <span class="token punctuation">{</span>
+  <span class="token property">background-image</span><span class="token punctuation">:</span> <span class="token function">linear-gradient</span><span class="token punctuation">(</span>90deg, <span class="token function">rgba</span><span class="token punctuation">(</span>0,0,0,0<span class="token punctuation">)</span> 0%, #000 100%<span class="token punctuation">)</span>, <span class="token function">linear-gradient</span><span class="token punctuation">(</span>0deg, #000 0%, <span class="token function">rgba</span><span class="token punctuation">(</span>0,0,0,0<span class="token punctuation">)</span> 100%<span class="token punctuation">)</span>, <span class="token function">linear-gradient</span><span class="token punctuation">(</span>-90deg, <span class="token function">rgba</span><span class="token punctuation">(</span>0,0,0,0<span class="token punctuation">)</span> 0%, #000 100%<span class="token punctuation">)</span>, <span class="token function">linear-gradient</span><span class="token punctuation">(</span>0deg, <span class="token function">rgba</span><span class="token punctuation">(</span>0,0,0,0<span class="token punctuation">)</span> 0%, #000 100%<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token property">background-repeat</span><span class="token punctuation">:</span> no-repeat, no-repeat, no-repeat, no-repeat<span class="token punctuation">;</span>
+  <span class="token property">background-size</span><span class="token punctuation">:</span> 100px 4px, 4px 100px, 100px 4px, 4px 100px<span class="token punctuation">;</span>
+  <span class="token property">background-position</span><span class="token punctuation">:</span> -100px 1px, <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span> -100px, <span class="token function">calc</span><span class="token punctuation">(</span>100% + 100px<span class="token punctuation">)</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% - 1px<span class="token punctuation">)</span>, 1px 0px<span class="token punctuation">;</span>
+  <span class="token property">animation</span><span class="token punctuation">:</span> moveLine 8s infinite linear<span class="token punctuation">;</span>
+  <span class="token property">height</span><span class="token punctuation">:</span> <span class="token function">calc</span><span class="token punctuation">(</span>100% - 2px<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> 1px<span class="token punctuation">;</span>
+  <span class="token property">background-clip</span><span class="token punctuation">:</span> content-box<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector">.box</span> <span class="token punctuation">{</span>
+  <span class="token property">height</span><span class="token punctuation">:</span> 300px<span class="token punctuation">;</span>
+  <span class="token property">width</span><span class="token punctuation">:</span> 400px<span class="token punctuation">;</span>
+  <span class="token property">box-shadow</span><span class="token punctuation">:</span> 0 0 3px orange<span class="token punctuation">;</span>
+  <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+  <span class="token property">line-height</span><span class="token punctuation">:</span> 280px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>你木有看错，只有一个DOM，外加一些CSS，就实现了上图的效果。</p>
+<h1><a id="_66"></a>样式分析解释</h1>
+<p>从以上CSS代码可以看到，这里的效果利用了<code>background</code>可以设置多层背景的特性，设置四个渐变的背景，分别在四个角上，然后就是控制四条渐变线背景出现的时机。这里只需要写一次，在想要有这个效果的地方使用<code>.marquee-line</code>这个className就行了，不过一般也就用在网站的body标签上，因为是使用背景的方式，它不会遮挡任何经过的元素。唯一不足的地方是，因为是使用纯CSS，宽高的移动速率全靠在<code>@keyframes moveLine</code>内部通过百分比写。所以就会造成在不同的宽高情况下，速率是不一样的。整体速度是通过设置<code>animation-duration</code>，我这里写的 <code>8s</code>。</p>
+<p><strong>最后想说的是，CSS很强大，嘿嘿</strong></p>
+<p>以上代码如有疑问，欢迎下方评论，谢谢。</p>
+</div>
+</body>
+
+</html>

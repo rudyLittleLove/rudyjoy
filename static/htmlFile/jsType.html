@@ -1,0 +1,129 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JavaScript 有哪些数据类型 以及获取与判断的方法</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>JavaScript 有哪些数据类型 以及获取与判断的方法</h3><ul><li><a href="#_1">引言</a></li><li><a href="#_6">数据类型</a></li><ul><li><a href="#_8">原始数据类型</a></li><ul><li><a href="#1Boolean__11">1.Boolean 类型</a></li><li><a href="#2Null__19">2.Null 类型</a></li><li><a href="#3Undefined__23">3.Undefined 类型</a></li><li><a href="#4Number__30">4.Number 类型</a></li><li><a href="#5BigInt__37">5.BigInt 类型</a></li><li><a href="#6String__44">6.String 类型</a></li><li><a href="#7Symbol__49">7.Symbol 类型</a></li></ul><li><a href="#_52">对象</a></li><ul><li><a href="#1__54">1."标准的" 对象</a></li><li><a href="#2_57">2.数组</a></li><li><a href="#3_60">3.函数</a></li></ul></ul><li><a href="#_65">获取与判断类型</a></li><ul><li><a href="#1typeof_67">1.typeof</a></li><li><a href="#2instanceof_111">2.instanceof</a></li></ul><li><a href="#_138">总结</a></li></ul></div><p></p>
+<h1><a id="_1"></a>引言</h1>
+<p>  对我来说什么时候写博客呢？无非就几种情况，一种是对某些知识了解不清楚需要巩固。一种是遇到问题上网找了很久没有合适的答案，最终找到了解决方案，为了方便广大同行能快速定位解决问题。最后一种就是有些小心得，分享记录一下自己的感受。</p>
+<p>  本篇信息主题其实算是很基础很基础的东西，但是就是这些基础有很多时候却被我忽略以至于弄混淆，现在就需要总结巩固一下了。</p>
+<h1><a id="_6"></a>数据类型</h1>
+<p>一共八种，七种原始数据类型和对象</p>
+<h2><a id="_8"></a>原始数据类型</h2>
+<p>也称为基本类型，分别是 <strong><code>Boolean</code>、 <code>Null</code>、 <code>Undefined</code>、 <code>Number</code>、 <code>BigInt</code>、 <code>String</code>、 <code>Symbol</code></strong></p>
+<h3><a id="1Boolean__11"></a>1.Boolean 类型</h3>
+<p>布尔类型，是一种取值仅能为 <code>真</code> 或 <code>假</code> 的数据类型，可以有两个值：<code>true</code> 和 <code>false</code>。<br>
+其他数据类型也被区分为 <code>truthy(真值)</code>，<code>falsy (虚值)</code>。在 Boolean 上下文中会被转换为 <code>true</code> 或者 <code>false</code>进行判断。<br>
+比如下面：<br>
+取反（<code>!</code>）、异或判断（<code>||</code>,<code>&amp;&amp;</code>）、<code>Boolean()</code>、<code>if()</code></p>
+<p><code>false</code>、<code>undefined</code>、<code>null</code>、<code>正负0</code>、<code>NaN</code>、<code>空字符串''</code> 以外的都是 <code>truthy(真值)</code></p>
+<h3><a id="2Null__19"></a>2.Null 类型</h3>
+<p>Null 类型只有一个值： <code>null</code>。<br>
+就是我们常说的空指针</p>
+<h3><a id="3Undefined__23"></a>3.Undefined 类型</h3>
+<p>一个已声明的变量（未赋值）的初始值是 <code>undefined</code>。未声明的使用直接报错 <font color="#b74f58">is not defined</font>。<br>
+以下几种情况也返回 <code>undefined</code><br>
+获取对象不存在（原型链上也不存在）的属性、调用没有返回值的函数、typeof判断未声明或者已声明未赋值的变量</p>
+<p><code>undefined</code>不存在属性，因此前端最常见的报错（没有之一）就是<font color="#b74f58"> Cannot read property ‘xxx’ of undefined</font>。</p>
+<h3><a id="4Number__30"></a>4.Number 类型</h3>
+<p>基于 IEEE 754 标准的双精度 64 位二进制格式的值（-(2<sup>53</sup> -1) 到 2<sup>53</sup> -1)，在javascript中称为安全整数，超过这个限制的数计算不精确。<br>
+最大安全整数 <code>Number.MAX_SAFE_INTEGER</code> === 2<sup>53</sup> -1<br>
+最小安全整数 <code>Number.MIN_SAFE_INTEGER</code> === -(2<sup>53</sup> -1）</p>
+<p>除了常见数值外， <code>+Infinity</code>，<code>-Infinity</code> 和 <code>NaN</code> 也是<code>Number</code>类型</p>
+<h3><a id="5BigInt__37"></a>5.BigInt 类型</h3>
+<p><code>BigInt</code>类型是 JavaScript 中的一个基础的数值类型，可以表示任意大的整数（甚至可以超过安全整数限制）<br>
+<code>BigInt</code> 类型可以使用常用运算 <code>+</code>、<code>*</code>、<code>-</code>、<code>**</code>、<code>%</code> ，除 <code>&gt;&gt;&gt;</code> （无符号右移）之外的 位操作 也可以支持<br>
+不支持单目 (+) 运算符（如：+2）<br>
+不能与<code>Number</code> 类型混合计算<br>
+不能使用<code>Math</code> 的方法</p>
+<h3><a id="6String__44"></a>6.String 类型</h3>
+<p>字符串类型，JavaScript 字符串是不可更改的，但是，可以基于对原始字符串的操作来创建新的字符串<br>
+可以使用<code>String.concat()</code>、<code>连字符（+）</code> 拼接字符串<br>
+可以使用<code>String</code> 方法，如：<code>replace</code>、<code>substr</code>、<code>slice</code>等</p>
+<h3><a id="7Symbol__49"></a>7.Symbol 类型</h3>
+<p>符号类型，符号类型唯一且不可修改，可以作为<code>Object</code> 的 <code>key</code>，作为<code>key</code> 的<code>Symbol</code> 不可枚举。</p>
+<h2><a id="_52"></a>对象</h2>
+<p>常见对象分为 <code>"标准的" 对象{}</code>、<code>数组 []</code>、<code>函数 function(){}</code> 等</p>
+<h3><a id="1__54"></a>1.“标准的” 对象</h3>
+<p>就是 <strong>键</strong> 和 <strong>值</strong> 之间的映射集合，<strong>键</strong> 是一个字符串（或者 Symbol） ，<strong>值</strong> 可以是任意类型的值。</p>
+<h3><a id="2_57"></a>2.数组</h3>
+<p>数组默认是有序整数作为 <strong>键</strong>属性（也可以使用字符串，Symbol）， <strong>值</strong> 可以是任意类型的值，类似于列表的高阶对象，表示列表和集合的最适合方式。</p>
+<h3><a id="3_60"></a>3.函数</h3>
+<p>分为普通函数 <code>function(){}</code> 和 箭头函数（<code>=&gt;</code>）。<br>
+<code>Date</code>、<code>Object</code>、<code>RegExp</code>、<code>String</code> 等等都是函数，JavaScript 的内置函数，可以通过 <code>new</code> 关键字创建对象实例。<br>
+自己创建的普通函数也可以创建实例，箭头函数不能。</p>
+<h1><a id="_65"></a>获取与判断类型</h1>
+<p>原生判断方式有两种，通过<code>typeof</code>返回判断，和通过 <code>instanceof</code> 查找原型链是否存在的方式判断。</p>
+<h2><a id="1typeof_67"></a>1.typeof</h2>
+<pre><code class="prism language-javascript"><span class="token keyword">typeof</span> <span class="token boolean">true</span>	  		<span class="token comment">// boolean</span>
+<span class="token keyword">typeof</span> undefined   	<span class="token comment">// undefined</span>
+<span class="token keyword">typeof</span> document<span class="token punctuation">.</span>all <span class="token comment">// undefined</span>
+<span class="token keyword">typeof</span> <span class="token number">3</span> 			<span class="token comment">// number</span>
+<span class="token keyword">typeof</span> <span class="token number">NaN</span>			<span class="token comment">// number</span>
+<span class="token keyword">typeof</span> <span class="token number">3</span>n			<span class="token comment">// bigint</span>
+<span class="token keyword">typeof</span> <span class="token string">'abc'</span>		<span class="token comment">// string</span>
+<span class="token keyword">typeof</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>			<span class="token comment">// object</span>
+<span class="token keyword">typeof</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>			<span class="token comment">// object</span>
+<span class="token keyword">typeof</span> <span class="token keyword">null</span>   		<span class="token comment">// object</span>
+<span class="token keyword">typeof</span> <span class="token operator">/</span>\s<span class="token operator">/</span>			<span class="token comment">// object</span>
+<span class="token keyword">typeof</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">)</span>	<span class="token comment">// object</span>
+<span class="token keyword">typeof</span> <span class="token keyword">new</span> <span class="token class-name">Set</span><span class="token punctuation">(</span><span class="token punctuation">)</span>	<span class="token comment">// object</span>
+<span class="token keyword">typeof</span> Date			<span class="token comment">// function</span>
+</code></pre>
+<p>typeof把 <code>数组</code> 与 <code>null</code> 、<code>Map</code>、<code>Set</code> 都判断为 object 了，其他的确实是对象这也能理解。但是 <code>null</code> 判断为对象，就是<a href="http://www.2ality.com/2013/10/typeof-null.html">javascript 设计之初就存在的bug了</a>。</p>
+<p>如果想要把类似 <code>数组</code>、<code>Map</code>、<code>Set</code>、<code>null</code> 等明确区分，可以自己写一个判断类型函数。如下：</p>
+<pre><code class="prism language-javascript"><span class="token keyword">function</span> <span class="token function">getType</span><span class="token punctuation">(</span>obj<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">return</span> Object<span class="token punctuation">.</span>prototype<span class="token punctuation">.</span>toString<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span>obj<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span><span class="token regex">/(?&lt;=\s)[a-zA-Z]+/</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">toLowerCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>在看一下上面的数据用<code>getType</code> 判断</p>
+<pre><code class="prism language-javascript"><span class="token function">getType</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span>	  	<span class="token comment">// boolean</span>
+<span class="token function">getType</span><span class="token punctuation">(</span>undefined<span class="token punctuation">)</span>  <span class="token comment">// undefined</span>
+<span class="token function">getType</span><span class="token punctuation">(</span>document<span class="token punctuation">.</span>all<span class="token punctuation">)</span><span class="token comment">// htmlallcollection</span>
+<span class="token function">getType</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span> 			<span class="token comment">// number</span>
+<span class="token function">getType</span><span class="token punctuation">(</span><span class="token number">NaN</span><span class="token punctuation">)</span>		<span class="token comment">// number</span>
+<span class="token function">getType</span><span class="token punctuation">(</span><span class="token number">3</span>n<span class="token punctuation">)</span>			<span class="token comment">// bigint</span>
+<span class="token function">getType</span><span class="token punctuation">(</span><span class="token string">'abc'</span><span class="token punctuation">)</span>		<span class="token comment">// string</span>
+<span class="token function">getType</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>			<span class="token comment">// array</span>
+<span class="token function">getType</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span>			<span class="token comment">// object</span>
+<span class="token function">getType</span><span class="token punctuation">(</span><span class="token keyword">null</span><span class="token punctuation">)</span>   	<span class="token comment">// null</span>
+<span class="token function">getType</span><span class="token punctuation">(</span><span class="token regex">/\s/</span><span class="token punctuation">)</span>		<span class="token comment">// regexp</span>
+<span class="token function">getType</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>	<span class="token comment">// map</span>
+<span class="token function">getType</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Set</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>	<span class="token comment">// set</span>
+<span class="token function">getType</span><span class="token punctuation">(</span>Date<span class="token punctuation">)</span>		<span class="token comment">// function</span>
+</code></pre>
+<h2><a id="2instanceof_111"></a>2.instanceof</h2>
+<p>用于检测构造函数的 prototype 属性是否出现在某个实例对象的原型链上。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">function</span> <span class="token constant">A</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token punctuation">}</span> 
+<span class="token keyword">function</span> <span class="token constant">B</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token punctuation">}</span> 
+
+<span class="token keyword">var</span> a <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">A</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+a <span class="token keyword">instanceof</span> <span class="token class-name">A</span><span class="token punctuation">;</span> <span class="token comment">// true，因为 Object.getPrototypeOf(a) === A.prototype</span>
+a <span class="token keyword">instanceof</span> <span class="token class-name">B</span><span class="token punctuation">;</span> <span class="token comment">// false，因为 B.prototype 不在 a 的原型链上</span>
+
+a <span class="token keyword">instanceof</span> <span class="token class-name">Object</span><span class="token punctuation">;</span> <span class="token comment">// true，因为 Object.prototype.isPrototypeOf(a) 返回 true</span>
+</code></pre>
+<p>我们常用来判断某个数据是否是某种类型，比如这里判断数组：</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> a <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> b <span class="token operator">=</span> <span class="token string">'234'</span>
+
+a <span class="token keyword">instanceof</span> <span class="token class-name">Array</span> <span class="token comment">// true，因为 Object.getPrototypeOf(a) === Array.prototype</span>
+b <span class="token keyword">instanceof</span> <span class="token class-name">Array</span> <span class="token comment">// false，因为 Array.prototype 不在 b 的原型链上</span>
+
+a <span class="token keyword">instanceof</span> <span class="token class-name">Object</span><span class="token punctuation">;</span> <span class="token comment">// true，因为 Object.prototype.isPrototypeOf(a) 返回 true</span>
+b <span class="token keyword">instanceof</span> <span class="token class-name">Object</span><span class="token punctuation">;</span> <span class="token comment">// false，因为 Object.prototype.isPrototypeOf(b) 返回 false</span>
+</code></pre>
+<h1><a id="_138"></a>总结</h1>
+<p>   关于javascript 数据类型以及获取类型以及判断类型就整理这些了。更多信息可以去<a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript">MDN JavaScript</a> 上看，上面写的很详细，每个属性之间的关联也整理的很清楚。</p>
+<p>以上信息如有疏漏或错误，欢迎指正。</p>
+</div>
+</body>
+
+</html>

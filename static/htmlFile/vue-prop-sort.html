@@ -1,0 +1,129 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vue 组件选项的推荐顺序 与 自动排序</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>vue 组件选项的推荐顺序 与 自动排序</h3><ul><li><a href="#vue_2">转载一下vue推荐顺序</a></li><li><a href="#_eslint__93">使用 eslint 自动排序</a></li></ul></div><br>
+一直以来使用vue开发，除了知道生命周期的 hook 函数顺序，其他选项的顺序不知道是否有规范。后来看了vue的风格指南，里面的选项是有推荐顺序的，也找了一下如何自动排序，今天就分享一下。<p></p>
+<h1><a id="vue_2"></a>转载一下vue推荐顺序</h1>
+<p>先发个 <a href="https://cn.vuejs.org/v2/style-guide/index.html#%E7%BB%84%E4%BB%B6-%E5%AE%9E%E4%BE%8B%E7%9A%84%E9%80%89%E9%A1%B9%E7%9A%84%E9%A1%BA%E5%BA%8F%E6%8E%A8%E8%8D%90">Vue 风格指南 选项推荐顺序 地址</a></p>
+<h4>组件/实例的选项应该有统一的顺序。</h4><h4>
+</h4><p><font size="4">这是我们推荐的组件选项默认顺序。它们被划分为<strong>几大类</strong>，所以你也能知道从插件里添加的新 property 应该放到哪里。</font></p>
+<p><strong>副作用</strong> (触发组件外的影响)</p>
+<p><font color="orange">★</font> <code>el</code></p>
+<p><strong>全局感知</strong> (要求组件以外的知识)</p>
+<p><font color="orange">★</font> <code>name</code></p>
+<p><font color="orange">★</font> <code>parent</code></p>
+<p><strong>组件类型</strong> (更改<strong>组件的类型</strong>)</p>
+<p><font color="orange">★</font> <code>functional</code></p>
+<p><strong>模板修改器</strong> (改变模板的编译方式)</p>
+<p><font color="orange">★</font> <code>delimiters</code></p>
+<p><font color="orange">★</font> <code>comments</code></p>
+<p><strong>模板依赖</strong> (模板内使用的资源)</p>
+<p><font color="orange">★</font> <code>components</code></p>
+<p><font color="orange">★</font> <code>directives</code></p>
+<p><font color="orange">★</font> <code>filters</code></p>
+<p><strong>组合</strong> (向选项里合并 property)</p>
+<p><font color="orange">★</font> <code>extends</code></p>
+<p><font color="orange">★</font> <code>mixins</code></p>
+<p><strong>接口</strong> (组件的接口)</p>
+<p><font color="orange">★</font> <code>inheritAttrs</code></p>
+<p><font color="orange">★</font> <code>model</code></p>
+<p><font color="orange">★</font> <code>props</code> / <code>propsData</code></p>
+<p><strong>本地状态</strong> (本地的响应式 property)</p>
+<p><font color="orange">★</font> <code>data</code></p>
+<p><font color="orange">★</font> <code>computed</code></p>
+<p><strong>事件</strong> (通过响应式事件触发的回调)</p>
+<p> <font color="orange">★</font> <code>watch</code></p>
+<p> <strong>生命周期钩子</strong> (按照它们被调用的顺序)</p>
+<p> <font color="orange">★</font> <code>beforeCreate</code></p>
+<p> <font color="orange">★</font> <code>created</code></p>
+<p> <font color="orange">★</font> <code>beforeMount</code></p>
+<p> <font color="orange">★</font> <code>mounted</code></p>
+<p> <font color="orange">★</font> <code>beforeUpdate</code></p>
+<p> <font color="orange">★</font> <code>updated</code></p>
+<p> <font color="orange">★</font> <code>activated</code></p>
+<p> <font color="orange">★</font> <code>deactivated</code></p>
+<p> <font color="orange">★</font> <code>beforeDestroy</code></p>
+<p> <font color="orange">★</font> <code>destroyed</code></p>
+<p><strong>非响应式的 property</strong> (不依赖响应系统的实例 property)</p>
+<p><font color="orange">★</font> <code>methods</code></p>
+<p><strong>渲染</strong> (组件输出的声明式描述)</p>
+<p><font color="orange">★</font> <code>template</code> / <code>render</code></p>
+<p><font color="orange">★</font> <code>renderError</code></p>
+<h1><a id="_eslint__93"></a>使用 eslint 自动排序</h1>
+<p>如果是用 <code>vue-cli3.0</code> 构建的项目，选择使用eslint 的话会默认安装 <code>eslint-plugin-vue</code> 这个依赖项</p>
+<p>如果没有就安装一下</p>
+<pre><code class="prism language-bash"><span class="token function">npm</span> <span class="token function">install</span> eslint-plugin-vue --save-dev
+</code></pre>
+<p>接着就是在 <code>.eslintrc.js</code> 中配置，如果用 <code>vue-cli3.0</code> 构建项目选择了 <code>In dedicated config files</code> ，就会生成 <code>.eslintrc.js</code>，选择 <code>In package.json</code> 规则就在<code>package.json</code> 中的 <code>eslintConfig</code> 这个属性上配置</p>
+<p>在以上说的配置文件中的 <code>extends</code> 这个数组中加入 <code>plugin:vue/recommended</code></p>
+<pre><code class="prism language-javascript"><span class="token string">"extends"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+  <span class="token string">"plugin:vue/essential"</span><span class="token punctuation">,</span>
+  <span class="token string">"plugin:vue/recommended"</span><span class="token punctuation">,</span> <span class="token comment">// 添加了这一项</span>
+  <span class="token string">"eslint:recommended"</span><span class="token punctuation">,</span>
+  <span class="token string">"@vue/prettier"</span>
+<span class="token punctuation">]</span><span class="token punctuation">,</span>
+</code></pre>
+<p>好了，就这么简单，保存时默认就已经有了自动格式化排序的功能了</p>
+<p>不想使用插件推荐的顺序，想自己定顺序，也可以</p>
+<p>在 <code>eslint</code> 配置文件中的 <code>rules</code> 属性下添加</p>
+<pre><code class="prism language-javascript">rules<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+ <span class="token string">"vue/order-in-components"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+   <span class="token string">"error"</span><span class="token punctuation">,</span>
+   <span class="token punctuation">{</span>
+     <span class="token string">"order"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+       <span class="token string">"el"</span><span class="token punctuation">,</span>
+       <span class="token string">"name"</span><span class="token punctuation">,</span>
+       <span class="token string">"key"</span><span class="token punctuation">,</span>
+       <span class="token string">"parent"</span><span class="token punctuation">,</span>
+       <span class="token string">"functional"</span><span class="token punctuation">,</span>
+       <span class="token punctuation">[</span><span class="token string">"delimiters"</span><span class="token punctuation">,</span> <span class="token string">"comments"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+       <span class="token punctuation">[</span><span class="token string">"components"</span><span class="token punctuation">,</span> <span class="token string">"directives"</span><span class="token punctuation">,</span> <span class="token string">"filters"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+       <span class="token string">"extends"</span><span class="token punctuation">,</span>
+       <span class="token string">"mixins"</span><span class="token punctuation">,</span>
+       <span class="token punctuation">[</span><span class="token string">"provide"</span><span class="token punctuation">,</span> <span class="token string">"inject"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+       <span class="token string">"ROUTER_GUARDS"</span><span class="token punctuation">,</span>
+       <span class="token string">"layout"</span><span class="token punctuation">,</span>
+       <span class="token string">"middleware"</span><span class="token punctuation">,</span>
+       <span class="token string">"validate"</span><span class="token punctuation">,</span>
+       <span class="token string">"scrollToTop"</span><span class="token punctuation">,</span>
+       <span class="token string">"transition"</span><span class="token punctuation">,</span>
+       <span class="token string">"loading"</span><span class="token punctuation">,</span>
+       <span class="token string">"inheritAttrs"</span><span class="token punctuation">,</span>
+       <span class="token string">"model"</span><span class="token punctuation">,</span>
+       <span class="token punctuation">[</span><span class="token string">"props"</span><span class="token punctuation">,</span> <span class="token string">"propsData"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+       <span class="token string">"emits"</span><span class="token punctuation">,</span>
+       <span class="token string">"setup"</span><span class="token punctuation">,</span>
+       <span class="token string">"fetch"</span><span class="token punctuation">,</span>
+       <span class="token string">"asyncData"</span><span class="token punctuation">,</span>
+       <span class="token string">"data"</span><span class="token punctuation">,</span>
+       <span class="token string">"head"</span><span class="token punctuation">,</span>
+       <span class="token string">"computed"</span><span class="token punctuation">,</span>
+       <span class="token string">"watch"</span><span class="token punctuation">,</span>
+       <span class="token string">"watchQuery"</span><span class="token punctuation">,</span>
+       <span class="token string">"LIFECYCLE_HOOKS"</span><span class="token punctuation">,</span>
+       <span class="token string">"methods"</span><span class="token punctuation">,</span>
+       <span class="token punctuation">[</span><span class="token string">"template"</span><span class="token punctuation">,</span> <span class="token string">"render"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+       <span class="token string">"renderError"</span>
+     <span class="token punctuation">]</span>
+   <span class="token punctuation">}</span>
+ <span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>修改 <code>order</code> 数组里面选项顺序，格式化的时候，就自动按照你书写的顺序格式化</p>
+<p>用图举个例子<br>
+<img src="https://img-blog.csdnimg.cn/20200610145717834.gif" alt="在这里插入图片描述"><br>
+在这个例子中，我修改了 <code>watch</code> 的顺序 在 <code>data</code>  的上方和下方，在 <code>vue</code> 文件中保存时，自动格式化了顺序。</p>
+<p>对于 <code>vue</code> 组件选项推荐顺序与自动排序就分享到这里，想了解配置更多的小伙伴可以点这个 链接 <a href="https://eslint.vuejs.org/rules/">eslint-plugin-vue</a> ，学习配置更多功能。</p>
+<p>以上信息如有疏漏或错误，欢迎指正哈</p>
+</div>
+</body>
+
+</html>

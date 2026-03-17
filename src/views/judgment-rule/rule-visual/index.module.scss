@@ -1,0 +1,29 @@
+
+.rule-visual-wrapper {
+  height: 100%;
+  background-color: #ffffff;
+  position: relative;
+  :global {
+    .rule-visual-box {
+      overflow: hidden;
+      cursor: grab;
+      box-sizing: border-box;
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      z-index: 0;
+      .translate-wrap {
+        & > div {
+          display: inline-flex;
+        }
+      }
+    }
+    .drag-line {
+      // pointer-events: none;
+      position: fixed;
+      z-index: 1;
+      height: 2px;
+      background-color: #697dff;
+    }
+  }
+}

@@ -1,0 +1,123 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOM property 和 attribute 的区别详解</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>DOM property 和 attribute 的区别详解</h3><ul><li><a href="#_1">引言</a></li><li><a href="#_4">明确概念</a></li><li><a href="#_20">讨论原因</a></li><li><a href="#_23">详细解释</a></li><li><a href="#_118">总结</a></li><li><a href="#_123">参考文档</a></li></ul></div><p></p>
+<h1><a id="_1"></a>引言</h1>
+<p>之前在阅读<code>vue</code> 的<code>api</code>的时候，在解释指令<code>v-bind</code>时，其中关于修饰符 <code>.prop</code> 的解释是- <strong>作为一个 DOM property 绑定而不是作为 attribute 绑定。</strong> 令我挺好奇的，虽然干了这么久前端还未详细探究过两者之前的具体区别。于是就跟着链接进入了<a href="https://stackoverflow.com/questions/6003819/what-is-the-difference-between-properties-and-attributes-in-html#answer-6004028">Stack Overflow</a>中，看与这相关的一个<strong>问题与讨论</strong>。讨论的内容也经多位牛人编辑，总结得很详细，就想着把这里面的内容在博客中分享记录一下。奈何时间关系，一直在博客的草稿箱里，年底了不怎么忙，趁有时间就总结翻译一下。</p>
+<h1><a id="_4"></a>明确概念</h1>
+<p>首先因为两个单词在中文中都翻译成<strong>属性</strong>，所以会造成较多混淆。在此也先明确一下其它一些基础概念。<br>
+身为前端人员我们经常会用<code>标签</code>，<code>元素</code>，<code>DOM</code>来形容<code>HTML</code> 内容，对此其实有明确划分的。如下<code>HTML code</code>（能明确区分的可以跳过）</p>
+<pre><code class="prism language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span><span class="token punctuation">"</span></span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span><span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+</code></pre>
+<p>标签指的是 <code>div</code>，也有其他标签如：<code>a</code>，<code>p</code>，<code>input</code>等等。<br>
+多数标签分为<code>&lt;div&gt;</code> 开始标签(opening tag)，以及<code>&lt;/div&gt;</code>结束标签(closing tag)。<br>
+当然有的也不区分如: <code>&lt;input&gt;</code>，<code>&lt;hr&gt;</code>，<code>&lt;br&gt;</code>等。<br>
+标签上有附加信息我们称之为 <code>HTML 属性</code>，如 <code>id</code>，<code>class</code><br>
+以上合起来，我们统称为<code>HTML 元素</code>，而一个<code>HTML文档</code>就是多个<code>HTML元素</code>构成的。</p>
+<p>而<code>HTML DOM</code>是 HTML 的标准对象模型，<code>DOM(Document Object Model)</code>，直译就是<strong>文档对象模型</strong><br>
+<code>HTML DOM</code> 定义了所有 HTML 元素的<strong>对象</strong>和<strong>属性</strong>，以及访问它们的<strong>方法</strong>。<br>
+而DOM对象上的<strong>属性</strong>我们称之为<code>property</code>。</p>
+<h1><a id="_20"></a>讨论原因</h1>
+<p>引发<a href="https://stackoverflow.com/questions/6003819/what-is-the-difference-between-properties-and-attributes-in-html#answer-6004028"><strong>此次</strong></a>讨论的主要原因就是因为<code>jQuery v1.6.1</code>的发布，此版本之前直接用<code>attr()</code>方法处理了<code>property</code>和<code>attribute</code>，为了消除<code>property</code>和<code>attribute</code>的歧义，以及一些<code>attr()</code>的bug和维护困难的问题，于是新添加了<code>prop()</code>方法，<code>jQuery v1.6.1</code>发布日志可以在<a href="http://blog.jquery.com/2011/05/12/jquery-1-6-1-released/"><strong>这里</strong></a>看。</p>
+<h1><a id="_23"></a>详细解释</h1>
+<p>编写HTML源代码时，可以在HTML元素上定义属性(attribute) 。 然后，一旦浏览器解析了您的代码，就会创建一个对应的DOM节点。 该节点是一个对象，因此具有属性 (property)。<br>
+例如：</p>
+<pre><code class="prism language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>input</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>text<span class="token punctuation">"</span></span> <span class="token attr-name">value</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>name<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+</code></pre>
+<p><code>input</code>元素有两个属性(attribute)，<code>type</code>和<code>value</code>。<br>
+浏览器解析这段代码后，将创建一个<a href="https://developer.mozilla.org/zh-CN/docs/Web/API/HTMLInputElement"><strong>HTMLInputElement</strong></a>对象，该对象将包含许多属性。<br>
+例如：<code>accept</code>，<code>accessKey</code>，<code>align</code>，<code>alt</code>，<code>attributes</code>，<code>autofocus</code>，<code>baseURI</code>，<code>checked</code>，<code>childElementCount</code>，<code>childNodes</code>，<code>childNodes</code>，<code>classList</code>，<code>className</code>，<code>clientHeight</code>等</p>
+<p>解析创建后的这个<strong>DOM节点对象</strong>，<code>property</code>是这个对象的属性，而<code>attribute</code>是这个对象的<code>attributes</code>这个对象的属性<br>
+<font size="2" color="#aaa">（简单讲就是这样 <code>domObj.attibutes.attribute</code> ）。<font></font></font></p>
+<p>因为是根据HTML 元素创建的<strong>DOM节点对象</strong>，所以会有许多属性(property)都与<strong>具有相同或相似名称</strong>的属性(attribute)相关，但这不并是一对一的关系。<br>
+比如：</p>
+<pre><code class="prism language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>input</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>inputId<span class="token punctuation">"</span></span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>text<span class="token punctuation">"</span></span> <span class="token attr-name">value</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>name<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+</code></pre>
+<p>此元素创建的<strong>DOM节点对象</strong>有，<code>id</code>，<code>type</code>，<code>value</code> 等属性(property)<br>
+DOM节点对象上的<code>id</code> 属性(property)是映射的<code>id</code>属性(attribute)。获取<code>id</code>的<code>property</code>就是获取<code>attribute</code>值，设置也是一样。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> inputDom <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">querySelector</span><span class="token punctuation">(</span><span class="token string">'#inputId'</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span><span class="token function">getAttribute</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span>id<span class="token punctuation">)</span>
+<span class="token comment">// "inputId"</span>
+<span class="token comment">// "inputId"</span>
+
+inputDom<span class="token punctuation">.</span><span class="token function">setAttribute</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">,</span><span class="token string">'inputId2'</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span><span class="token function">getAttribute</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span>id<span class="token punctuation">)</span>
+<span class="token comment">// "inputId2"</span>
+<span class="token comment">// "inputId2"</span>
+
+inputDom<span class="token punctuation">.</span>id <span class="token operator">=</span> <span class="token string">'inputId'</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span><span class="token function">getAttribute</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span>id<span class="token punctuation">)</span>
+<span class="token comment">// "inputId"</span>
+<span class="token comment">// "inputId"</span>
+</code></pre>
+<p>DOM节点对象上的<code>type</code>属性(property)是映射 <code>type</code>的属性(attribute)，获取<code>property</code>读取的是<code>attribute</code>值，并且设置<code>property</code>写入的是<code>attribute</code>值。<code>type</code>不是纯粹的映射属性，因为它的值只能为 <strong>已知值</strong> （例如:<code>text</code>，<code>submit</code>，<code>button</code>，<code>checkbox</code>等等）。以下可以看到，设置<code>type</code>为<strong>未知值</strong> 时 <code>property</code>始终为text。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> inputDom <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">querySelector</span><span class="token punctuation">(</span><span class="token string">'#inputId'</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span><span class="token function">getAttribute</span><span class="token punctuation">(</span><span class="token string">'type'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span>type<span class="token punctuation">)</span>
+<span class="token comment">// text</span>
+<span class="token comment">// text</span>
+
+inputDom<span class="token punctuation">.</span><span class="token function">setAttribute</span><span class="token punctuation">(</span><span class="token string">'type'</span><span class="token punctuation">,</span><span class="token string">'007'</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span><span class="token function">getAttribute</span><span class="token punctuation">(</span><span class="token string">'type'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span>type<span class="token punctuation">)</span>
+<span class="token comment">// 007</span>
+<span class="token comment">// text</span>
+
+inputDom<span class="token punctuation">.</span>type <span class="token operator">=</span> <span class="token string">'008'</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span><span class="token function">getAttribute</span><span class="token punctuation">(</span><span class="token string">'type'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span>type<span class="token punctuation">)</span>
+<span class="token comment">// 008</span>
+<span class="token comment">// text</span>
+</code></pre>
+<p><code>value</code>属性(property)不是完全映射<code>value</code>属性(attribute)。 初始状态<code>value</code>属性(property)映射的<code>value</code>属性(attribute)， 当用户手动更改输入框的内容时 ， <code>value</code>属性(property)将更改为用户输入的信息。</p>
+<pre><code class="prism language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>input</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>inputId<span class="token punctuation">"</span></span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>text<span class="token punctuation">"</span></span> <span class="token attr-name">value</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>name<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+</code></pre>
+<pre><code class="prism language-javascript"><span class="token keyword">var</span> inputDom <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">querySelector</span><span class="token punctuation">(</span><span class="token string">'#inputId'</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span><span class="token function">getAttribute</span><span class="token punctuation">(</span><span class="token string">'value'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span>value<span class="token punctuation">)</span>
+<span class="token comment">// name</span>
+<span class="token comment">// name</span>
+
+inputDom<span class="token punctuation">.</span><span class="token function">setAttribute</span><span class="token punctuation">(</span><span class="token string">'value'</span><span class="token punctuation">,</span><span class="token string">'007'</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span><span class="token function">getAttribute</span><span class="token punctuation">(</span><span class="token string">'value'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span>value<span class="token punctuation">)</span>
+<span class="token comment">// 007</span>
+<span class="token comment">// 007</span>
+
+inputDom<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'008'</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span><span class="token function">getAttribute</span><span class="token punctuation">(</span><span class="token string">'value'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>inputDom<span class="token punctuation">.</span>value<span class="token punctuation">)</span>
+<span class="token comment">// 007</span>
+<span class="token comment">// 008</span>
+</code></pre>
+<p>由以上可以得知，<code>input</code>的<code>value</code>属性(property)在用户未输入数据，或设置<code>property</code>的值时，取的值是<code>attribute</code>的值。当用户输入值或者设置了<code>property</code>的值后，<code>property</code>的值就不受<code>attribute</code>影响了，<code>property</code>的值就是页面输入框内展示的内容（如下图）<br>
+<img src="https://img-blog.csdnimg.cn/2020011820011235.png" alt="在这里插入图片描述"><br>
+<code>attribute</code>的值是HTML源代码属性（如下图）<br>
+<img src="https://img-blog.csdnimg.cn/20200118195847768.png" alt="attribute 的值"><br>
+从这个例子中就能很明显看出来<code>property</code>和<code>attribute</code>的区别了，当然还有很多属性<code>property</code>与<code>attribute</code>之间的映射关系并不相同，比如<code>class attribute</code> 和 <code>className property</code>、<code>classList property</code> 之间的关系等等。</p>
+<p>这里有篇 <a href="https://angular.cn/guide/template-syntax#html-attribute-vs-dom-property"><strong>Angular 的文档</strong></a>，其中也描述了html属性和DOM属性的一些内容，有兴趣的小伙伴们可以进去看看。<br>
+<a href="https://developer.mozilla.org/zh-CN/docs/Web/API#%E6%8E%A5%E5%8F%A3">Web API 接口参考</a></p>
+<h1><a id="_118"></a>总结</h1>
+<p>最后总的来讲就是  <strong>HTML属性</strong> (attribute)和 <strong>DOM属性</strong>(property)，是相互关联的。多数情况<code>attribute</code>值仅用作初始DOM节点对象使用，而<code>property</code>更多用于页面交互，很多框架都是在与元素和指令的 <code>property</code>和事件打交道。</p>
+<p>以上描述如有错误欢迎指正，谢谢</p>
+<h1><a id="_123"></a>参考文档</h1>
+<p>以上所引用文档都尽量更换为中文文档，原英文文档参考下方。</p>
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement">HTMLInputElement</a><br>
+<a href="https://developer.mozilla.org/en-US/docs/Web/API#Interfaces">Web APIs</a><br>
+<a href="https://angular.io/guide/template-syntax#html-attribute-vs-dom-property">HTML attribute vs. DOM property</a><br>
+<a href="https://stackoverflow.com/questions/6003819/what-is-the-difference-between-properties-and-attributes-in-html#answer-6004028">Stack Overflow</a></p>
+</div>
+</body>
+
+</html>

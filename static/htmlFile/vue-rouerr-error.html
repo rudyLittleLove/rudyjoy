@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue-router 不允许导航到当前位置（&quot;/path&quot;）错误原因以及修复方式</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>Vue-router 不允许导航到当前位置（/path）</h3><ul><li><a href="#_1">报错提示</a></li><li><a href="#_4">错误原因</a></li><li><a href="#_7">错误演示</a></li><li><a href="#_37">解决方法</a></li><ul><li><a href="#_38">方法一</a></li><li><a href="#_55">方法二</a></li><li><a href="#_70">方法三</a></li></ul></ul></div><p></p>
+<h1><a id="_1"></a>报错提示</h1>
+<p><font size="5" color="#d2413e">Navigating to current location ("/path") is not allowed</font><br>
+<img src="https://img-blog.csdnimg.cn/2020022415225595.png" alt="Navigating to current location (&quot;/path&quot;) is not allowed"></p>
+<h1><a id="_4"></a>错误原因</h1>
+<p>控制台出现以上这种 <code>Navigating to current location ("/path") is not allowed</code> 时，是因为重复进入了相同路由。</p>
+<h1><a id="_7"></a>错误演示</h1>
+<p>为了演示报错，用<code>vue-cli</code>重新构建了一个新的项目，只编写了一个<code>按钮</code>一个<code>input</code>。<br>
+code：</p>
+<pre><code class="prism language-html"><span class="token comment">&lt;!-- vue模板代码 --&gt;</span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span><span class="token punctuation">&gt;</span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>button</span> <span class="token attr-name">@click</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>gotoHandle<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>测试路由跳转<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>button</span><span class="token punctuation">&gt;</span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>input</span> <span class="token attr-name">v-model</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>routeName<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span><span class="token punctuation">&gt;</span></span>
+</code></pre>
+<pre><code class="prism language-javascript"><span class="token comment">// 路由跳转代码</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  <span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      routeName<span class="token punctuation">:</span> <span class="token string">''</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    <span class="token function">gotoHandle</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>$router<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>name<span class="token punctuation">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>routeName<span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>动图演示<br>
+<img src="https://img-blog.csdnimg.cn/20200224153003425.gif" alt="Navigating to current location (&quot;/path&quot;) is not allowed"><br>
+在重复进入相同路由时（不论是通过路径，还是路由名称进入），会提示不允许导航到当前位置（<code>path</code>）， 就像上面的例子进入路由名为<code>About</code>的路由时，提示的是<code>path: "/about"</code>，<font size="2" color="#d2413e">Navigating to current location ("/about") is not allowed</font>。这是因为跳转的方法错误时，未捕获错误处理，因此直接输出了错误信息。</p>
+<h1><a id="_37"></a>解决方法</h1>
+<h2><a id="_38"></a>方法一</h2>
+<p>直接在跳转报错的那个地方加上<code>.catch(error =&gt; error)</code></p>
+<pre><code class="prism language-javascript"><span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  <span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      routeName<span class="token punctuation">:</span> <span class="token string">''</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    <span class="token function">gotoHandle</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>$router<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>name<span class="token punctuation">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>routeName<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token keyword">catch</span><span class="token punctuation">(</span>error <span class="token operator">=&gt;</span> error<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2><a id="_55"></a>方法二</h2>
+<p>为跳转错误的方法全局加上错误捕获。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">import</span> VueRouter <span class="token keyword">from</span> <span class="token string">'vue-router'</span>
+
+<span class="token keyword">const</span> routerPush <span class="token operator">=</span> VueRouter<span class="token punctuation">.</span>prototype<span class="token punctuation">.</span>push
+VueRouter<span class="token punctuation">.</span>prototype<span class="token punctuation">.</span><span class="token function-variable function">push</span> <span class="token operator">=</span> <span class="token keyword">function</span> <span class="token punctuation">(</span>location<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> routerPush<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> location<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token keyword">catch</span><span class="token punctuation">(</span>error <span class="token operator">=&gt;</span> error<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>以上代码在<code>main.js</code>，或者<code>router/index.js</code> 下执行，以及<code>new VueRouter</code>之前之后都一样。因为是重置的<code>VueRouter</code>原型对象上的<code>push</code>事件，给原型对象的<code>push</code>事件添加上了捕获异常，所以会通过原型链改变所有相关对象。</p>
+<p><code>replace</code> 方法重复跳转错误与上方类似，把<code>push</code>改成<code>replace</code>就好。</p>
+<h2><a id="_70"></a>方法三</h2>
+<p>此方法为建议方法，建议优化跳转逻辑，避免重复跳转相同路由。</p>
+<p>以上如果错误或疏漏，欢迎指正。</p>
+</div>
+</body>
+
+</html>
